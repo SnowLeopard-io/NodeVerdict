@@ -33,7 +33,7 @@ self.onmessage = createWorkerHandler((input: TracingWorkerInput): TraceViewerDat
   // The causal DAG is the single source of truth for topology: both the
   // waterfall tree and the parent-child dependency links derive from its edges.
   const graph = buildCausalGraph(analysis.events);
-  const spans = buildWaterfall(analysis.operations, analysis.events);
+  const spans = buildWaterfall(analysis.operations, analysis.events, graph);
   const dependencies = buildDependencies(analysis.operations, graph);
   const allSpans = spans.flatMap(s => [s, ...flattenChildren(s)]);
   const bottlenecks = findBottlenecks(allSpans);

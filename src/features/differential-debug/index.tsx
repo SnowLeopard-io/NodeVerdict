@@ -3,6 +3,8 @@ import { analyzeDifferential } from '../../shared/differential';
 import type { DifferentialAnalysis, DivergencePoint, ValueDiff } from '../../shared/differential';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { ExportButton } from '../report/ExportButton';
+import { toMarkdown } from '../report/exportUtils';
 import type { TracingEvent } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
 
@@ -114,6 +116,56 @@ export function DifferentialDebugPage() {
           <button onClick={handleReset} className="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             {t('diffDebug.clearStart')}
           </button>
+          {analysis && (
+            <ExportButton
+              filename="differential-debug"
+              onExportMarkdown={() => toMarkdown({
+                title: t('diffDebug.exportTitle'),
+                sections: [
+                  {
+                    title: t('diffDebug.exportRuns'),
+                    type: 'stats',
+                    content: [
+                      { label: t('diffDebug.normalRun'), value: normal.name },
+                      { label: t('diffDebug.faultRun'), value: fault.name },
+                      { label: t('diffDebug.analyzeTime'), value: `${analysis.meta.elapsedMs.toFixed(0)}ms` },
+                    ],
+                  },
+                  {
+                    title: t('diffDebug.exportAlignment'),
+                    type: 'stats',
+                    content: [
+                      { label: t('diffDebug.similarity'), value: `${(analysis.alignment.similarity * 100).toFixed(1)}%` },
+                      { label: t('diffDebug.editDistance'), value: analysis.alignment.editDistance.toLocaleString() },
+                      { label: t('diffDebug.divergences'), value: analysis.divergences.length.toLocaleString() },
+                    ],
+                  },
+                  {
+                    title: t('diffDebug.exportFirstDivergence'),
+                    type: 'text',
+                    content: analysis.report.firstDivergence
+                      ? analysis.report.firstDivergence.description
+                      : t('diffDebug.noDivergence'),
+                  },
+                  {
+                    title: t('diffDebug.exportDivergences'),
+                    type: 'alert' as const,
+                    content: {
+                      level: analysis.divergences.length > 0 ? 'warning' : 'info',
+                      message: analysis.report.summary,
+                    },
+                  },
+                  ...(analysis.report.recommendations.length > 0
+                    ? [{
+                      title: t('diffDebug.exportRecommendations'),
+                      type: 'text' as const,
+                      content: analysis.report.recommendations.map(r => `- ${r}`).join('\n'),
+                    }]
+                    : []),
+                ],
+              })}
+            />
+          )}
         </div>
       </div>
 

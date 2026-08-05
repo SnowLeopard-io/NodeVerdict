@@ -14,9 +14,9 @@ import type { CausalEdge, CausalGraph } from './causal-types';
  * Backward compatible: callers that pass `(operations, events)` get the same
  * `TraceSpan[]` shape; `operations` is still used to attach error payloads.
  */
-export function buildWaterfall(operations: PairedOperation[], events: TracingEvent[]): TraceSpan[] {
-  const graph = buildCausalGraph(events);
-  return causalGraphToSpans(graph, operations);
+export function buildWaterfall(operations: PairedOperation[], events: TracingEvent[], graph?: CausalGraph): TraceSpan[] {
+  const g = graph ?? buildCausalGraph(events);
+  return causalGraphToSpans(g, operations);
 }
 
 /**
@@ -59,10 +59,20 @@ export function causalGraphToSpans(graph: CausalGraph, operations?: PairedOperat
     byId.set(n.id, n);
   }
 
+  // Break causal cycles before building the tree: if both a node and its parent
+  // lie on the same detected cycle, the cycle edge must not create a tree loop
+  // (it would either drop the node entirely or recurse forever). The node is
+  // demoted to a root instead; its real operation is still rendered.
+  const cyclicIds = new Set(graph.nodes.filter((n) => n.cyclic).map((n) => n.id));
+
   const buildSpan = (id: string): TraceSpan | undefined => {
     const node = byId.get(id);
     if (!node) return undefined;
     const edge = childEdge.get(id);
+    let parentId = edge ? edge.parentId : undefined;
+    if (parentId !== undefined && cyclicIds.has(id) && cyclicIds.has(parentId)) {
+      parentId = undefined; // cycle edge — demote to root so nothing is dropped
+    }
     const op = opsById.get(id);
     const metadata: Record<string, unknown> = { ...node.metadata };
     const opErr = opError.get(id);
@@ -76,7 +86,7 @@ export function causalGraphToSpans(graph: CausalGraph, operations?: PairedOperat
       endTime: node.endTime ?? node.startTime,
       duration: node.duration ?? 0,
       depth: 0,
-      parentId: edge ? edge.parentId : undefined,
+      parentId,
       children: [],
       status: node.status === 'virtual' ? 'incomplete' : node.status,
       metadata,

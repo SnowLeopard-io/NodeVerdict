@@ -5,6 +5,8 @@ import type { JitAnalysis, JitFinding } from '../../shared/types';
 import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { useUIStore } from '../../stores';
 import { useI18n } from '../../shared/i18n/useI18n';
+import { ExportButton } from '../report/ExportButton';
+import { toMarkdown } from '../report/exportUtils';
 import { IcStateGraph } from './components/IcStateGraph';
 import { OptTimeline } from './components/OptTimeline';
 import { FindingsList } from './components/FindingsList';
@@ -135,6 +137,48 @@ export function JitInsightsPage() {
             />
             {(error || urlError) && <p className="text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
           </div>
+          <ExportButton
+            filename="jit-insights"
+            onExportMarkdown={() => toMarkdown({
+              title: t('jitInsights.exportTitle'),
+              sections: [
+                {
+                  title: t('jitInsights.exportTraceSummary'),
+                  type: 'stats',
+                  content: [
+                    { label: t('jitInsights.icEvents'), value: demoTrace.icEvents.length.toLocaleString() },
+                    { label: t('jitInsights.optEvents'), value: demoTrace.optEvents.length.toLocaleString() },
+                    { label: t('jitInsights.deoptEvents'), value: demoTrace.deoptEvents.length.toLocaleString() },
+                    { label: t('jitInsights.health'), value: `${Math.round(analysis.healthScore * 100)}%` },
+                    { label: t('jitInsights.findingsCount').replace('{count}', String(findings.length)), value: '' },
+                  ],
+                },
+                {
+                  title: t('jitInsights.exportHotSites'),
+                  type: 'table',
+                  content: {
+                    headers: [t('jitInsights.site'), t('jitInsights.state'), t('jitInsights.maps'), t('jitInsights.hits'), t('jitInsights.keys')],
+                    rows: analysis.sites.slice(0, 12).map(site => [
+                      site.site ?? '—',
+                      site.state,
+                      String(site.maps.length),
+                      String(site.hits),
+                      site.keys.slice(0, 4).join(', ') + (site.keys.length > 4 ? '…' : ''),
+                    ]),
+                  },
+                },
+                {
+                  title: t('jitInsights.exportFindings'),
+                  type: 'text',
+                  content: findings.length === 0
+                    ? t('jitInsights.empty')
+                    : findings.map(f =>
+                      `- **[${f.severity.toUpperCase()}] ${f.title}**\n  - Target: ${f.target}\n  - ${f.detail}\n  - Evidence:\n${f.evidence.map(e => `    - ${e}`).join('\n')}`
+                    ).join('\n\n'),
+                },
+              ],
+            })}
+          />
         </div>
       </div>
 

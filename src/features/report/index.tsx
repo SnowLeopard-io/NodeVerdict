@@ -246,6 +246,7 @@ function exportHtmlReport(reportData: ReportData, t: (key: string) => string): v
     .logo { width: 32px; height: 32px; background: #059669; color: #fff; text-align: center; font-weight: bold; font-size: 18px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
     .findings { margin-bottom: 24px; }
     .footer { text-align: center; font-size: 14px; color: #6b7280; margin-top: 16px; }
+  </style>
 </head>
 <body>
   <div class="container">

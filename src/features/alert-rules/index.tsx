@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRootStore } from '../../stores';
 import { EmptyState } from '../../shared/components';
 import { generateId } from '../../shared/utils';
@@ -275,10 +276,11 @@ export function AlertRulesPage() {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-96">
+      {/* Create/Edit Modal — portal to body so the page container's animated
+          transform (fade-up) can't hijack fixed positioning / z-index */}
+      {showForm && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto my-auto">
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4">
               {editingId ? t('alert.editRule') : t('alert.newRule')}
             </h2>
@@ -367,7 +369,8 @@ export function AlertRulesPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

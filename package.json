@@ -16,6 +16,7 @@
     "agent": "node server/live-agent.mjs"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",

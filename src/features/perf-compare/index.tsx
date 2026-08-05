@@ -2,6 +2,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { analyzeTracingEvents, buildWaterfall, findBottlenecks } from '../../shared/engine';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { ExportButton } from '../report/ExportButton';
+import { toMarkdown } from '../report/exportUtils';
 import { formatDuration } from '../../shared/utils';
 import type { TracingEvent, TracingAnalysis, TraceSpan } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
@@ -141,6 +143,49 @@ export function PerfComparePage() {
         <button onClick={handleReset} className="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
           {t('perfCompare.clearStart')}
         </button>
+        <ExportButton
+          filename="perf-compare"
+          onExportMarkdown={() => toMarkdown({
+            title: t('perfCompare.exportTitle'),
+            sections: [
+              {
+                title: t('perfCompare.exportBaseline'),
+                type: 'stats',
+                content: [
+                  { label: t('perfCompare.events'), value: dataA.analysis.totalEvents.toLocaleString() },
+                  { label: t('perfCompare.operations'), value: dataA.analysis.totalOperations.toLocaleString() },
+                  { label: t('perfCompare.errorRate'), value: `${(dataA.analysis.errorRate * 100).toFixed(1)}%` },
+                  { label: t('perfCompare.duration'), value: formatDuration(dataA.analysis.timeRange.end - dataA.analysis.timeRange.start) },
+                ],
+              },
+              {
+                title: t('perfCompare.exportChanged'),
+                type: 'stats',
+                content: [
+                  { label: t('perfCompare.events'), value: dataB.analysis.totalEvents.toLocaleString() },
+                  { label: t('perfCompare.operations'), value: dataB.analysis.totalOperations.toLocaleString() },
+                  { label: t('perfCompare.errorRate'), value: `${(dataB.analysis.errorRate * 100).toFixed(1)}%` },
+                  { label: t('perfCompare.duration'), value: formatDuration(dataB.analysis.timeRange.end - dataB.analysis.timeRange.start) },
+                ],
+              },
+              {
+                title: t('perfCompare.exportChannelComparison'),
+                type: 'table',
+                content: {
+                  headers: [t('perfCompare.channel'), t('perfCompare.avgA'), t('perfCompare.avgB'), t('perfCompare.delta'), t('perfCompare.changePercent'), t('perfCompare.errorsAB')],
+                  rows: (comparison?.channels ?? []).map(ch => [
+                    ch.channel,
+                    `${ch.avgDurationA.toFixed(1)}ms`,
+                    `${ch.avgDurationB.toFixed(1)}ms`,
+                    ch.durationDelta > 0 ? `+${ch.durationDelta.toFixed(1)}ms` : `${ch.durationDelta.toFixed(1)}ms`,
+                    `${ch.durationPercent > 0 ? '+' : ''}${ch.durationPercent.toFixed(1)}%`,
+                    `${ch.errorA} → ${ch.errorB}`,
+                  ]),
+                },
+              },
+            ],
+          })}
+        />
       </div>
 
       {/* Overview comparison */}

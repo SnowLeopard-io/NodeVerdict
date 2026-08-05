@@ -15447,9 +15447,9 @@ function buildCausalGraph(events) {
 }
 
 // src/shared/engine/trace-aggregator.ts
-function buildWaterfall(operations, events) {
-  const graph = buildCausalGraph(events);
-  return causalGraphToSpans(graph, operations);
+function buildWaterfall(operations, events, graph) {
+  const g = graph ?? buildCausalGraph(events);
+  return causalGraphToSpans(g, operations);
 }
 function causalGraphToSpans(graph, operations) {
   const opsById = /* @__PURE__ */ new Map();
@@ -15471,10 +15471,15 @@ function causalGraphToSpans(graph, operations) {
     if (n.virtual) continue;
     byId.set(n.id, n);
   }
+  const cyclicIds = new Set(graph.nodes.filter((n) => n.cyclic).map((n) => n.id));
   const buildSpan = (id) => {
     const node = byId.get(id);
     if (!node) return void 0;
     const edge = childEdge.get(id);
+    let parentId = edge ? edge.parentId : void 0;
+    if (parentId !== void 0 && cyclicIds.has(id) && cyclicIds.has(parentId)) {
+      parentId = void 0;
+    }
     const op = opsById.get(id);
     const metadata = { ...node.metadata };
     const opErr = opError.get(id);
@@ -15488,7 +15493,7 @@ function causalGraphToSpans(graph, operations) {
       endTime: node.endTime ?? node.startTime,
       duration: node.duration ?? 0,
       depth: 0,
-      parentId: edge ? edge.parentId : void 0,
+      parentId,
       children: [],
       status: node.status === "virtual" ? "incomplete" : node.status,
       metadata,

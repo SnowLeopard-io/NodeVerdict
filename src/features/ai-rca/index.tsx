@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useUnifiedFileUpload } from '../../shared/hooks';
@@ -7,6 +8,7 @@ import type { RcaConfig } from '../../shared/ai';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import type { TracingWorkerInput, TracingWorkerOutput } from '../../shared/workers/tracing-handler';
 import { FileUpload, EmptyState, StatCard } from '../../shared/components';
+import { ExportButton } from '../report/ExportButton';
 import type { TraceViewerData, TraceSpan } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
 
@@ -31,9 +33,9 @@ function RcaConfigModal({ open, onClose, onSave }: {
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md p-6 max-h-[calc(100vh-2rem)] overflow-y-auto my-auto" onClick={e => e.stopPropagation()}>
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">{t('aiRca.configTitle')}</h2>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{t('aiRca.configDesc')}</p>
 
@@ -87,7 +89,8 @@ function RcaConfigModal({ open, onClose, onSave }: {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -282,6 +285,9 @@ export function AiRcaPage() {
                 {t('aiRca.localDiagnose')}
               </button>
             )}
+            {report && !running && (
+              <ExportButton filename="ai-rca-report" onExportMarkdown={() => report} />
+            )}
           </div>
 
           {reportError && (
@@ -293,7 +299,7 @@ export function AiRcaPage() {
           {(running || report) && (
             <div ref={reportRef} className="max-h-[480px] overflow-auto rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6">
               {report ? (
-                <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-200">
+                <div className="prose prose-sm max-w-none dark:prose-invert">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{report}</ReactMarkdown>
                 </div>
               ) : (

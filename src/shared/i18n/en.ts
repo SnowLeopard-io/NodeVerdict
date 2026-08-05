@@ -891,6 +891,32 @@ const en: Record<string, string> = {
   'aiRca.cancel': 'Cancel',
   'aiRca.clearKey': 'Clear saved key',
 
+  // AI Root Cause Analysis — export
+  'aiRca.exportTitle': 'AI Root Cause Report',
+  'aiRca.exportSummary': 'Summary',
+  'aiRca.exportTraceSummary': 'Trace summary',
+  'aiRca.exportReport': 'Diagnosis report',
+
+  // Differential Debug — export
+  'diffDebug.exportTitle': 'Differential Debug Report',
+  'diffDebug.exportRuns': 'Runs',
+  'diffDebug.exportAlignment': 'Alignment',
+  'diffDebug.exportFirstDivergence': 'First divergence',
+  'diffDebug.exportDivergences': 'Divergence points',
+  'diffDebug.exportRecommendations': 'Recommendations',
+
+  // JIT Insights — export
+  'jitInsights.exportTitle': 'JIT Insights Report',
+  'jitInsights.exportTraceSummary': 'Trace summary',
+  'jitInsights.exportHotSites': 'Hot IC sites',
+  'jitInsights.exportFindings': 'Findings',
+
+  // Performance Comparison — export
+  'perfCompare.exportTitle': 'Performance Comparison Report',
+  'perfCompare.exportBaseline': 'Baseline (A)',
+  'perfCompare.exportChanged': 'Changed (B)',
+  'perfCompare.exportChannelComparison': 'Channel comparison',
+
   // Topology (distributed tracing)
   'topology.title': 'Service Topology',
   'topology.uploadTitle': 'Upload distributed trace JSON',

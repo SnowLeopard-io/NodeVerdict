@@ -107,7 +107,7 @@ export function TopologyPage() {
     // For now, compute on main thread (events are already loaded)
     const analysis = analyzeTracingEvents(events);
     const graph = buildCausalGraph(analysis.events);
-    const spans = buildWaterfall(analysis.operations, analysis.events);
+    const spans = buildWaterfall(analysis.operations, analysis.events, graph);
     const dependencies = buildDependencies(analysis.operations, graph);
     const allSpans = spans.flatMap(s => [s, ...flattenChildren(s)]);
     const bottlenecks = findBottlenecks(allSpans);

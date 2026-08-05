@@ -210,9 +210,10 @@ export class StreamingRCA {
     const openPenalty = this.options.openSpanPenalty ?? 0.6;
 
     const findings: StreamingFinding[] = [];
+    const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
     for (const id of realIds) {
       const ev = this.info.get(id);
-      const node = graph.nodes.find((n) => n.id === id);
+      const node = nodeById.get(id);
       const channel = node?.channel ?? ev?.channel ?? 'unknown';
       const st = this.stats.get(channel);
       const base = baselines.get(channel) ?? 0;

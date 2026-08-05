@@ -823,6 +823,32 @@ const zh: Record<string, string> = {
   'aiRca.cancel': '取消',
   'aiRca.clearKey': '清除已保存的密钥',
 
+  // AI 根因分析 — 导出
+  'aiRca.exportTitle': 'AI 根因分析报告',
+  'aiRca.exportSummary': '摘要',
+  'aiRca.exportTraceSummary': '追踪摘要',
+  'aiRca.exportReport': '诊断报告',
+
+  // 差异调试 — 导出
+  'diffDebug.exportTitle': '差异调试报告',
+  'diffDebug.exportRuns': '运行',
+  'diffDebug.exportAlignment': '对齐',
+  'diffDebug.exportFirstDivergence': '首次分歧',
+  'diffDebug.exportDivergences': '分歧点',
+  'diffDebug.exportRecommendations': '建议',
+
+  // JIT 分析 — 导出
+  'jitInsights.exportTitle': 'JIT 分析报告',
+  'jitInsights.exportTraceSummary': '追踪摘要',
+  'jitInsights.exportHotSites': '热点 IC 站点',
+  'jitInsights.exportFindings': '发现项',
+
+  // 性能对比 — 导出
+  'perfCompare.exportTitle': '性能对比报告',
+  'perfCompare.exportBaseline': '基线 (A)',
+  'perfCompare.exportChanged': '变更 (B)',
+  'perfCompare.exportChannelComparison': '通道对比',
+
   // Topology (分布式追踪)
   'topology.title': '服务拓扑',
   'topology.uploadTitle': '上传分布式追踪 JSON',

@@ -3,13 +3,13 @@ import * as d3 from 'd3';
 import type { TraceSpan } from '../../../shared/types';
 import { channelColor } from '../../../shared/utils';
 import { useI18n } from '../../../shared/i18n/useI18n';
+import { flattenRows } from './waterfall-utils';
 
 interface WaterfallChartProps {
   spans: TraceSpan[];
 }
 
 const ROW_HEIGHT = 30;
-const AXIS_HEIGHT = 20;
 /** Rows rendered above/below the viewport to avoid pop-in while scrolling. */
 const OVERSCAN = 12;
 
@@ -21,6 +21,7 @@ const OVERSCAN = 12;
  * of total span count. This keeps a 100k+ span trace fluid without WebGL.
  */
 
+/** Depth-first flatten of the nested span tree into an ordered row list. */
 export function WaterfallChart({ spans }: WaterfallChartProps) {
   const { t } = useI18n();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -29,6 +30,9 @@ export function WaterfallChart({ spans }: WaterfallChartProps) {
   const [containerWidth, setContainerWidth] = useState(600);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(400);
+
+  // Flatten once so the virtualized row list includes every nested span.
+  const rows = useMemo(() => flattenRows(spans), [spans]);
 
   // Observe the outer container width for responsive scales.
   useEffect(() => {
@@ -61,37 +65,59 @@ export function WaterfallChart({ spans }: WaterfallChartProps) {
   const { start, end } = useMemo(() => {
     const firstRow = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN);
     const lastRow = Math.min(
-      spans.length,
+      rows.length,
       Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + OVERSCAN,
     );
     return { start: firstRow, end: lastRow };
-  }, [scrollTop, viewportHeight, spans.length]);
+  }, [scrollTop, viewportHeight, rows.length]);
 
-  const visible = useMemo(() => spans.slice(start, end), [spans, start, end]);
+  const visible = useMemo(() => rows.slice(start, end), [rows, start, end]);
 
-  // Render only the visible slice.
+  // Explicit pixel sizing — no SVG viewBox auto-scaling. The svg is as tall as
+  // the full track and the wrapping div scrolls; only the visible rows become
+  // DOM nodes, so we keep it fluid without skewing positions.
+  const top = 20;
+  const right = 24;
+  const bottom = 30;
+  const width = Math.max(200, containerWidth - right);
+  const svgHeight = (rows.length + 1) * ROW_HEIGHT + top + bottom;
+
+  // Render only the visible slice. The bar area starts just after the widest
+  // visible channel label (measured, never hard-coded) so text can never
+  // overlap the bars; depth indentation shifts labels left of that anchor.
   useEffect(() => {
     if (!svgRef.current || visible.length === 0) return;
 
     const svg = d3.select(svgRef.current);
-    const margin = { top: 20, right: 20, bottom: 20, left: 200 };
-    const width = Math.max(200, containerWidth - margin.left - margin.right);
-    const totalHeight = (spans.length + 1) * ROW_HEIGHT;
 
-    svg.selectAll('*').remove();
-    svg.attr('viewBox', `0 0 ${width + margin.left + margin.right} ${totalHeight + margin.top + margin.bottom}`);
+    // Measure the widest visible label (real rendered width, depth included).
+    const probe = svg.append('g').attr('class', 'label-probe');
+    let maxDepth = 0;
+    let widest = 0;
+    visible.forEach((span) => {
+      maxDepth = Math.max(maxDepth, span.depth);
+      const t = probe.append('text')
+        .attr('font-size', '11px')
+        .text(span.channel);
+      widest = Math.max(widest, t.node()?.getComputedTextLength() ?? 0);
+    });
+    // Anchor x for end-aligned labels: depth indentation pushes the text left,
+    // so the right edge of the deepest indented label sits at depth*14 + pad.
+    const labelAnchorX = 8 + maxDepth * 14 + widest;
+    const barStart = labelAnchorX + 8;
+    probe.remove();
 
-    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
-
-    const minTime = d3.min(spans, s => s.startTime) ?? 0;
-    const maxTime = d3.max(spans, s => s.endTime) ?? 0;
+    const minTime = d3.min(rows, s => s.startTime) ?? 0;
+    const maxTime = d3.max(rows, s => s.endTime) ?? 0;
     const xScale = d3.scaleLinear()
       .domain([minTime, maxTime])
-      .range([0, width]);
+      .range([barStart, width]);
+
+    const g = svg.append('g').attr('transform', `translate(0,${top})`);
 
     // Grid lines (render once at the bottom of the full track).
     const axisG = g.append('g')
-      .attr('transform', `translate(0, ${totalHeight})`)
+      .attr('transform', `translate(0, ${rows.length * ROW_HEIGHT})`)
       .call(d3.axisBottom(xScale).ticks(5))
       .attr('font-size', '10px');
     axisG.selectAll('.domain, .tick line').attr('stroke', 'currentColor');
@@ -105,7 +131,7 @@ export function WaterfallChart({ spans }: WaterfallChartProps) {
       const barWidth = Math.max(2, xScale(span.endTime) - x);
 
       g.append('text')
-        .attr('x', -10)
+        .attr('x', labelAnchorX - span.depth * 14)
         .attr('y', y + ROW_HEIGHT / 2)
         .attr('text-anchor', 'end')
         .attr('dominant-baseline', 'middle')
@@ -141,19 +167,20 @@ export function WaterfallChart({ spans }: WaterfallChartProps) {
           .text('!');
       }
     });
-  }, [visible, spans, start, containerWidth]);
+    return () => { svg.selectAll('*').remove(); };
+  }, [visible, rows, start, width, top]);
 
-  if (spans.length === 0) {
+  if (rows.length === 0) {
     return <div className="text-sm text-gray-400 text-center py-8">{t('traceViewer.noDataToDisplay')}</div>;
   }
 
   return (
     <div ref={containerRef} className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-2">
       <div ref={scrollRef} onScroll={onScroll} className="overflow-auto" style={{ maxHeight: '70vh' }}>
-        <svg ref={svgRef} className="text-gray-700 dark:text-gray-300" style={{ minHeight: '200px', display: 'block' }} />
+        <svg ref={svgRef} width={containerWidth} height={svgHeight} className="text-gray-700 dark:text-gray-300 block" />
       </div>
       <div className="mt-1 text-xs text-gray-400">
-        {t('traceViewer.trackVirtual').replace('{shown}', String(visible.length)).replace('{total}', String(spans.length))}
+        {t('traceViewer.trackVirtual').replace('{shown}', String(visible.length)).replace('{total}', String(rows.length))}
       </div>
     </div>
   );
