@@ -3,7 +3,7 @@ import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { analyzeTracingEvents, generateReport, decompressReport } from '../../shared/engine';
 import { encodeReportToHash, decodeReportFromHash } from '../../shared/utils';
-import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { Page, UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import type { TracingEvent, ReportData, ChannelStats } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
 
@@ -57,7 +57,7 @@ export function ReportPage() {
 
   if (!reportData) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('report.title')}
           description={t('report.description')}
@@ -75,12 +75,12 @@ export function ReportPage() {
             description={t('report.uploadHint')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <Page maxWidth="4xl">
       <div className="mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('report.title')}</h1>
@@ -190,7 +190,7 @@ export function ReportPage() {
       </div>
 
       <LoadingOverlay visible={upload.loading} />
-    </div>
+    </Page>
   );
 }
 

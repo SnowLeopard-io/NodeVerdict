@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { analyzeTracingEvents } from '../../shared/engine';
-import { ChannelFilter, UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { Page, ChannelFilter, UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { formatDuration } from '../../shared/utils';
 import type { TracingEvent } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
@@ -122,7 +122,7 @@ export function SearchFilterPage() {
 
    if (!tracingAnalysis) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('searchFilter.title')}
           description={t('searchFilter.description')}
@@ -137,12 +137,12 @@ export function SearchFilterPage() {
         <div className="mt-8">
           <EmptyState title={t('searchFilter.noData')} description={t('searchFilter.description')} />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('searchFilter.title')}</h1>
@@ -329,6 +329,6 @@ export function SearchFilterPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">{t('searchFilter.noMatch')}</p>
         </div>
       )}
-    </div>
+    </Page>
   );
 }

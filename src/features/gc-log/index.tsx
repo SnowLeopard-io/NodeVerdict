@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { parseGcLog } from '../../shared/engine';
-import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay, Page, StatGrid } from '../../shared/components';
 import { formatDuration } from '../../shared/utils';
 import type { GCLogAnalysis } from '../../shared/types';
 import { ExportButton } from '../report/ExportButton';
@@ -49,7 +49,7 @@ export function GcLogPage() {
 
   if (!gcLog) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('gcLog.title')}
           description={t('gcLog.description')}
@@ -67,12 +67,12 @@ export function GcLogPage() {
             description={t('gcLog.description')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('gcLog.title')}</h1>
@@ -132,15 +132,15 @@ export function GcLogPage() {
       </div>
 
       {/* Stat cards: Total GCs, Major GCs, Minor GCs, Total Pause Time */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <StatGrid cols={4}>
         <StatCard title={t('gcLog.totalGcs')} value={gcLog.totalGcs.toLocaleString()} />
         <StatCard title={t('gcLog.majorGcs')} value={gcLog.majorGcCount.toLocaleString()} />
         <StatCard title={t('gcLog.minorGcs')} value={gcLog.minorGcCount.toLocaleString()} />
         <StatCard title={t('gcLog.totalPauseTime')} value={formatDuration(gcLog.totalPauseMs)} />
-      </div>
+      </StatGrid>
 
       {/* Average Pause cards: Avg Major Pause, Avg Minor Pause */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <StatGrid cols={2}>
         <StatCard
           title={t('gcLog.avgMajorPause')}
           value={formatDuration(gcLog.avgMajorPauseMs)}
@@ -151,7 +151,7 @@ export function GcLogPage() {
           value={formatDuration(gcLog.avgMinorPauseMs)}
           subtitle={gcLog.minorGcCount > 0 ? t('gcLog.eventsCountSubtitle').replace('{count}', gcLog.minorGcCount.toLocaleString()) : t('gcLog.noMinorEvents')}
         />
-      </div>
+      </StatGrid>
 
       {/* External Memory Alert */}
       {gcLog.externalUnmanaged ? (
@@ -222,6 +222,6 @@ export function GcLogPage() {
       </div>
 
       <LoadingOverlay visible={upload.loading || upload.urlLoading} />
-    </div>
+    </Page>
   );
 }

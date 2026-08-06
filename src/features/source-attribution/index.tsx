@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import { attributeSpans } from '../../shared/source/source-attribution';
-import { EmptyState, StatCard, UploadHeader } from '../../shared/components';
+import { Page, EmptyState, StatCard, UploadHeader } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import type { TraceViewerData, TraceSpan } from '../../shared/types';
 import type { TracingWorkerInput, TracingWorkerOutput } from '../../shared/workers/tracing-handler';
@@ -36,7 +36,7 @@ export function SourceAttributionPage() {
   const totalDuration = attribution?.sites.reduce((s, x) => s + x.totalDuration, 0) ?? 0;
 
   return (
-    <div className="p-6">
+    <Page>
       <UploadHeader
         title={t('sourceAttr.title')}
         description={t('sourceAttr.description')}
@@ -98,7 +98,7 @@ export function SourceAttributionPage() {
           )}
         </>
       )}
-    </div>
+    </Page>
   );
 }
 

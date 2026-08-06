@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { analyzeTracingEvents } from '../../shared/engine';
-import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay, Page, StatGrid } from '../../shared/components';
 import type { TracingEvent, TracingAnalysis } from '../../shared/types';
 import * as d3 from 'd3';
 import { useI18n } from '../../shared/i18n/useI18n';
@@ -265,7 +265,7 @@ export function TimeSeriesPage() {
 
   if (!tracingAnalysis) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('timeSeries.title')}
           description={t('timeSeries.description')}
@@ -280,7 +280,7 @@ export function TimeSeriesPage() {
         <div className="mt-8">
           <EmptyState title={t('timeSeries.noData')} description={t('timeSeries.description')} />
         </div>
-      </div>
+      </Page>
     );
   }
 
@@ -290,7 +290,7 @@ export function TimeSeriesPage() {
   const p95 = durations.length ? sorted[Math.ceil(durations.length * 0.95) - 1] : 0;
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('timeSeries.title')}</h1>
@@ -301,12 +301,12 @@ export function TimeSeriesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <StatGrid cols={4}>
         <StatCard title={t('timeSeries.avgThroughput')} value={`${(tracingAnalysis.totalEvents / ((tracingAnalysis.timeRange.end - tracingAnalysis.timeRange.start) / 1000)).toFixed(1)}/s`} subtitle={t('timeSeries.eventsPerSecond')} />
         <StatCard title={t('timeSeries.avgLatency')} value={avgDuration.toFixed(1) + 'ms'} />
         <StatCard title={t('timeSeries.p95Latency')} value={p95.toFixed(1) + 'ms'} color={p95 > 100 ? 'text-orange-600 dark:text-orange-400' : undefined} />
         <StatCard title={t('timeSeries.operations')} value={tracingAnalysis.totalOperations.toLocaleString()} />
-      </div>
+      </StatGrid>
 
       <div className="grid grid-cols-1 gap-4 mb-4">
         <TimeSeriesChart analysis={tracingAnalysis} />
@@ -349,9 +349,9 @@ export function TimeSeriesPage() {
                 <td className="px-4 py-2 text-right text-xs text-gray-600 dark:text-gray-300">{cs.totalOperations}</td>
               </tr>
             ))}
-          </tbody>
-        </table>
+</tbody>
+      </table>
       </div>
-    </div>
+    </Page>
   );
 }

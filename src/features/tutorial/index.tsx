@@ -3,12 +3,13 @@ import remarkGfm from 'remark-gfm';
 import tutorialMd from './TUTORIAL.md?raw';
 import tutorialMdZh from './TUTORIAL.zh.md?raw';
 import { useI18n } from '../../shared/i18n/useI18n';
+import { Page } from '../../shared/components';
 
 export function TutorialPage() {
   const { t, lang } = useI18n();
   const content = lang === 'zh' ? tutorialMdZh : tutorialMd;
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('tutorial.title')}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('tutorial.description')}</p>
@@ -90,6 +91,6 @@ export function TutorialPage() {
           {content}
         </ReactMarkdown>
       </div>
-    </div>
+    </Page>
   );
 }

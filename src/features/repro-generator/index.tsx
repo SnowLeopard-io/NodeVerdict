@@ -3,7 +3,7 @@ import { useUnifiedFileUpload } from '../../shared/hooks';
 import { loadTracingData } from '../../shared/engine';
 import { buildReproScript } from '../../shared/engine/repro-extractor';
 import type { TracingEvent } from '../../shared/types';
-import { EmptyState, StatCard, UploadHeader } from '../../shared/components';
+import { Page, EmptyState, StatCard, UploadHeader } from '../../shared/components';
 import { useI18n } from '../../shared/i18n/useI18n';
 
 export function ReproGeneratorPage() {
@@ -43,7 +43,7 @@ export function ReproGeneratorPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <Page maxWidth="4xl">
       <UploadHeader
         title={t('repro.title')}
         description={t('repro.description')}
@@ -88,7 +88,7 @@ export function ReproGeneratorPage() {
           </div>
         </>
       )}
-    </div>
+    </Page>
   );
 }
 

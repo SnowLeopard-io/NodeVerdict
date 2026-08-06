@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { decompressReport } from '../../shared/engine/report-generator';
 import { diffReports, renderDiffMarkdown } from '../../shared/engine/report-diff';
 import type { ReportData } from '../../shared/types';
-import { EmptyState, StatCard } from '../../shared/components';
+import { Page, EmptyState, StatCard } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import { useI18n } from '../../shared/i18n/useI18n';
 
@@ -20,7 +20,7 @@ export function ReportDiffPage() {
   const diff = useMemo(() => (baseData || headData ? diffReports(baseData, headData) : null), [baseData, headData]);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <Page maxWidth="5xl">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('reportDiff.title')}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('reportDiff.description')}</p>
@@ -88,7 +88,7 @@ export function ReportDiffPage() {
           </div>
         </>
       )}
-    </div>
+    </Page>
   );
 }
 

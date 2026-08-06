@@ -6,7 +6,7 @@ import { loadTracingData } from '../../shared/engine';
 import { measureTrace, buildBaselineReport, formatBaselineReport } from '../../shared/gate/baseline';
 import { evaluateGate, computeGateMetrics, defaultGateConfig } from '../../shared/gate/performance-gate';
 import type { TracingEvent } from '../../shared/types';
-import { EmptyState, StatCard, UploadHeader } from '../../shared/components';
+import { Page, EmptyState, StatCard, UploadHeader } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import { useI18n } from '../../shared/i18n/useI18n';
 
@@ -27,7 +27,7 @@ export function CiBaselinePage() {
   const gate = useMemo(() => (events ? evaluateGate(computeGateMetrics(events)) : null), [events]);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <Page maxWidth="4xl">
       <UploadHeader
         title={t('ciBaseline.title')}
         description={t('ciBaseline.description')}
@@ -82,6 +82,6 @@ export function CiBaselinePage() {
           )}
         </>
       )}
-    </div>
+    </Page>
   );
 }

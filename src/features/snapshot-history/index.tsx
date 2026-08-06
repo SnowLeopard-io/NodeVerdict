@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useEffect, useState } from 'react';
 import { useRootStore } from '../../stores/root-store';
-import { UploadHeader, WideUpload, StatCard, EmptyState } from '../../shared/components';
+import { Page, UploadHeader, WideUpload, StatCard, EmptyState } from '../../shared/components';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { formatBytes } from '../../shared/utils';
 import { detectLeakPattern, getGrowthTrend } from '../../shared/engine/snapshot-history';
@@ -208,7 +208,7 @@ export function SnapshotHistoryPage() {
   }
 
   return (
-    <div className="p-6">
+    <Page>
       {snapshotHistory.length === 0 ? (
         <div className="max-w-3xl mx-auto">
           <UploadHeader
@@ -387,6 +387,6 @@ export function SnapshotHistoryPage() {
       </div>
         </div>
       )}
-    </div>
+    </Page>
   );
 }

@@ -7,7 +7,7 @@ import { useI18n } from '../../shared/i18n/useI18n';
 import { EventTimeline } from './components/EventTimeline';
 import { EventDetail } from './components/EventDetail';
 import { EventSummary } from './components/EventSummary';
-import { ChannelFilter, UploadHeader, WideUpload, LoadingOverlay, EmptyState } from '../../shared/components';
+import { ChannelFilter, UploadHeader, WideUpload, LoadingOverlay, EmptyState, Page } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
 
@@ -55,7 +55,7 @@ export function EventViewerPage() {
 
   if (!tracingAnalysis) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('eventViewer.uploadTitle')}
           description={t('eventViewer.uploadHint')}
@@ -73,12 +73,12 @@ export function EventViewerPage() {
             description={t('eventViewer.uploadHint')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4">
         <div className="flex items-start justify-between">
         <div>
@@ -160,6 +160,6 @@ export function EventViewerPage() {
       </div>
 
       <LoadingOverlay visible={upload.loading || upload.urlLoading} message={t('eventViewer.parsingEvents')} />
-    </div>
+    </Page>
   );
 }

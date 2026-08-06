@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import { diffCpuProfiles, summarizeCpuDiff } from '../../shared/engine/cpu-profile-diff';
-import { PageHeader, WideUpload, EmptyState, StatCard } from '../../shared/components';
+import { Page, PageHeader, WideUpload, EmptyState, StatCard } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import type { CpuProfileAnalysis, CpuProfileDiff } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
@@ -56,7 +56,7 @@ export function CpuProfileDiffPage() {
 
   if (!before || !after) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <PageHeader title={t('cpuDiff.title')} description={t('cpuDiff.description')} />
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
@@ -68,12 +68,12 @@ export function CpuProfileDiffPage() {
             <WideUpload api={uploadAfter} accept=".cpuprofile,.json" label={t('cpuProfiler.uploadTitle')} />
           </div>
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('cpuDiff.title')}</h1>
@@ -125,7 +125,7 @@ export function CpuProfileDiffPage() {
           </tbody>
         </table>
       </div>
-    </div>
+    </Page>
   );
 }
 

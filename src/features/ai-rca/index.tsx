@@ -9,7 +9,7 @@ import { fingerprintTrace, recallSimilarFrom, loadRcaHistory, appendRcaHistory }
 import type { RcaSimilarity } from '../../shared/ai/rca-memory';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import type { TracingWorkerInput, TracingWorkerOutput } from '../../shared/workers/tracing-handler';
-import { UploadHeader, EmptyState, StatCard } from '../../shared/components';
+import { Page, UploadHeader, EmptyState, StatCard } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import type { TraceViewerData, TraceSpan, TracingEvent } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
@@ -311,7 +311,7 @@ export function AiRcaPage() {
   }, [analysis]);
 
   return (
-    <div className={!analysis ? "p-6 max-w-3xl mx-auto" : "p-6"}>
+    <Page>
       <RcaConfigModal
         key={modalSession}
         open={modalOpen}
@@ -491,6 +491,6 @@ export function AiRcaPage() {
           )}
         </>
       )}
-    </div>
+    </Page>
   );
 }

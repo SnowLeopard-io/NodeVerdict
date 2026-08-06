@@ -7,7 +7,7 @@ import type { TracingWorkerInput, TracingWorkerOutput } from '../../shared/worke
 import { useI18n } from '../../shared/i18n/useI18n';
 import { WaterfallChart } from './components/WaterfallChart';
 import { BottleneckList } from './components/BottleneckList';
-import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay, Page, StatGrid } from '../../shared/components';
 import type { TraceViewerData, TracingEvent } from '../../shared/types';
 import { formatDuration } from '../../shared/utils';
 
@@ -104,7 +104,7 @@ export function TraceViewerPage() {
 
   if (!traceData) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('traceViewer.title')}
           description={t('traceViewer.uploadHint')}
@@ -122,12 +122,12 @@ export function TraceViewerPage() {
             description={t('traceViewer.uploadDesc')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('traceViewer.title')}</h1>
@@ -147,11 +147,11 @@ export function TraceViewerPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <StatGrid cols={3}>
         <StatCard title={t('traceViewer.totalSpans')} value={formatDuration(totalDuration)} subtitle={t('traceViewer.spanCount').replace('{count}', String(spanCount(spans)))} />
         <StatCard title={t('traceViewer.operations')} value={traceData.totalOperations.toString()} />
         <StatCard title={t('traceViewer.bottleneckCount')} value={bottlenecks.length.toString()} color={bottlenecks.length > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-gray-100'} />
-      </div>
+      </StatGrid>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-3">
@@ -163,6 +163,6 @@ export function TraceViewerPage() {
       </div>
 
       <LoadingOverlay visible={upload.loading || traceLoading} />
-    </div>
+    </Page>
   );
 }

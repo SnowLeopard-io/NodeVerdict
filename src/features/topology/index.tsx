@@ -6,7 +6,7 @@ import type { TopologyGraph, RootCauseReport, ServiceNode, ServiceHealth } from 
 import type { TracingEvent, TraceViewerData } from '../../shared/types';
 import { useRootStore, useUIStore } from '../../stores';
 import { useI18n } from '../../shared/i18n/useI18n';
-import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay, Page, StatGrid } from '../../shared/components';
 import { TopologyGraphCanvas } from './components/TopologyGraphCanvas';
 import { RootCausePanel } from './components/RootCausePanel';
 import { ServiceDetail } from './components/ServiceDetail';
@@ -115,7 +115,7 @@ export function TopologyPage() {
 
   if (!graph || !report) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('topology.title')}
           description={t('topology.uploadHint')}
@@ -130,12 +130,12 @@ export function TopologyPage() {
           <EmptyState title={t('topology.noData')} description={t('topology.noDataDesc')} />
         </div>
         <LoadingOverlay visible={upload.loading || upload.urlLoading || topologyLoading} />
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('topology.title')}</h1>
@@ -151,7 +151,7 @@ export function TopologyPage() {
 
         {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <StatGrid cols={4}>
         <StatCard title={t('topology.services')} value={String(graph.services)} />
         <StatCard title={t('topology.traces')} value={String(graph.traces)} />
         <StatCard title={t('topology.edges')} value={String(graph.edges.length)} />
@@ -160,7 +160,7 @@ export function TopologyPage() {
           value={String(faultyCount)}
           color={faultyCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}
         />
-      </div>
+      </StatGrid>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {/* Graph */}
@@ -222,6 +222,6 @@ export function TopologyPage() {
           )}
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

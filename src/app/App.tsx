@@ -28,6 +28,7 @@ import { CiBaselinePage } from '../features/ci-baseline';
 import { ReproGeneratorPage } from '../features/repro-generator';
 import { useEffect, useState } from 'react';
 import { useI18n } from '../shared/i18n/useI18n';
+import { Page as PageLayout } from '../shared/components';
 
 function HomePage() {
   const { navigate } = useUIStore();
@@ -63,7 +64,7 @@ function HomePage() {
   ];
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <PageLayout maxWidth="4xl">
       <div className="text-center py-12">
         <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <svg className="w-8 h-8 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +91,7 @@ function HomePage() {
           </div>
         ))}
       </div>
-    </div>
+    </PageLayout>
   );
 }
 

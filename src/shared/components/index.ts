@@ -7,3 +7,5 @@ export { ErrorBoundary } from './ErrorBoundary';
 export { LangSwitch } from './LangSwitch';
 export { PageHeader, WideUpload, UploadHeader } from './UploadSection';
 export type { UploadApi } from './UploadSection';
+export { Page, StatGrid, Card, SectionTitle } from './Page';
+export type { PageWidth, StatGridCols } from './Page';

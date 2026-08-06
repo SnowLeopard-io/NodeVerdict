@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { parseMemoryTimeline, calculateGrowthRate } from '../../shared/engine';
-import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay, Page, StatGrid } from '../../shared/components';
 import { formatBytes, formatDuration } from '../../shared/utils';
 import type { MemoryTimeline, MemoryGrowthRate } from '../../shared/types';
 import * as d3 from 'd3';
@@ -187,7 +187,7 @@ export function MemoryTimelinePage() {
 
   if (!memoryTimeline) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('memoryTimeline.title')}
           description={t('memoryTimeline.description')}
@@ -205,14 +205,14 @@ export function MemoryTimelinePage() {
             description={t('memoryTimeline.description')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   const { snapshots, durationMs, intervalMs } = memoryTimeline;
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('memoryTimeline.title')}</h1>
@@ -271,11 +271,11 @@ export function MemoryTimelinePage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <StatGrid cols={3}>
         <StatCard title={t('memoryTimeline.duration')} value={formatDuration(durationMs)} />
         <StatCard title={t('memoryTimeline.snapshots')} value={snapshots.length.toLocaleString()} />
         <StatCard title={t('memoryTimeline.interval')} value={formatDuration(intervalMs)} />
-      </div>
+      </StatGrid>
 
       {/* Growth Rate Alert */}
       {growthRate && (
@@ -355,6 +355,6 @@ export function MemoryTimelinePage() {
           </table>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

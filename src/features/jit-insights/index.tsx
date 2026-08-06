@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { parseV8Trace, analyzeJit, generatePatches } from '../../shared/engine';
 import type { JitAnalysis, JitFinding } from '../../shared/types';
-import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { Page, UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { useUIStore } from '../../stores';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { ExportButton } from '../report/ExportButton';
@@ -76,7 +76,7 @@ export function JitInsightsPage() {
 
   if (!analysis || !demoTrace) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('jitInsights.title')}
           description={t('jitInsights.description')}
@@ -91,14 +91,14 @@ export function JitInsightsPage() {
           <EmptyState title={t('jitInsights.noData')} description={t('jitInsights.description')} />
         </div>
         <LoadingOverlay visible={upload.loading || upload.urlLoading} />
-      </div>
+      </Page>
     );
   }
 
   const siteRows = analysis.sites.slice(0, 12);
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4">
         <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -265,6 +265,6 @@ export function JitInsightsPage() {
           {patchMode === 'autofix' ? <AutoFixPanel findings={findings} /> : <PatchPanel />}
         </div>
       )}
-    </div>
+    </Page>
   );
 }

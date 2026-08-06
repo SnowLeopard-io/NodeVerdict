@@ -3,7 +3,7 @@ import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import { FlameGraph } from './components/FlameGraph';
-import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay, Page, StatGrid } from '../../shared/components';
 import type { CpuProfileAnalysis } from '../../shared/types';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
@@ -62,7 +62,7 @@ export function CpuProfilerPage() {
 
   if (!analysis) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('cpuProfiler.title')}
           description={t('cpuProfiler.description')}
@@ -80,12 +80,12 @@ export function CpuProfilerPage() {
             description={t('cpuProfiler.uploadHint')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('cpuProfiler.title')}</h1>
@@ -135,12 +135,12 @@ export function CpuProfilerPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <StatGrid cols={4}>
         <StatCard title={t('cpuProfiler.totalTime')} value={`${analysis.totalTime.toFixed(1)}ms`} />
         <StatCard title={t('cpuProfiler.samples')} value={analysis.sampleCount.toLocaleString()} />
         <StatCard title={t('cpuProfiler.functions')} value={analysis.hotFunctions.length.toLocaleString()} />
         <StatCard title={t('cpuProfiler.topHot')} value={analysis.topFunctions[0]?.functionName ?? 'N/A'} subtitle={analysis.topFunctions[0] ? `${analysis.topFunctions[0].totalTime.toFixed(1)}ms` : ''} />
-      </div>
+      </StatGrid>
 
       {/* Profiler Controls */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg mb-4">
@@ -228,6 +228,6 @@ export function CpuProfilerPage() {
           </table>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

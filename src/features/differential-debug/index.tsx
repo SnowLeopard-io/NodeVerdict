@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { analyzeDifferential } from '../../shared/differential';
 import type { DifferentialAnalysis, DivergencePoint, ValueDiff } from '../../shared/differential';
 import { useUnifiedFileUpload } from '../../shared/hooks';
-import { PageHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { Page, PageHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
 import type { TracingEvent } from '../../shared/types';
@@ -68,7 +68,7 @@ export function DifferentialDebugPage() {
   // ── Upload screen ───────────────────────────────────────────────────
   if (!normal || !fault) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <PageHeader title={t('diffDebug.title')} description={t('diffDebug.description')} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -91,13 +91,13 @@ export function DifferentialDebugPage() {
             description={t('diffDebug.description')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   // ── Analysis screen ─────────────────────────────────────────────────
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('diffDebug.title')}</h1>
@@ -250,7 +250,7 @@ export function DifferentialDebugPage() {
           )}
         </div>
       )}
-    </div>
+    </Page>
   );
 }
 

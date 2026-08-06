@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { StatCard } from '../../shared/components';
+import { Page, StatCard } from '../../shared/components';
 import { formatBytes, formatTimestamp, channelColor } from '../../shared/utils';
 import { RealtimeChart } from './components/RealtimeChart';
 import { MemoryGauge } from './components/MemoryGauge';
@@ -740,7 +740,7 @@ export function LiveMonitorPage() {
     : 0;
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('liveMonitor.title')}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -1214,6 +1214,6 @@ export function LiveMonitorPage() {
           <div ref={logEndRef} />
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

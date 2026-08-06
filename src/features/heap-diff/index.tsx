@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { diffHeapSnapshots } from '../../shared/engine';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
-import { PageHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { Page, PageHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { formatBytes } from '../../shared/utils';
 import type { HeapSnapshot, HeapAnalysis } from '../../shared/types';
 import type { HeapDiffResult } from '../../shared/engine';
@@ -125,7 +125,7 @@ export function HeapDiffPage() {
 
   if (!diffResult) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <PageHeader title={t('heapDiff.title')} description={t('heapDiff.description')} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -148,12 +148,12 @@ export function HeapDiffPage() {
             description={t('heapDiff.uploadHint')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('heapDiff.title')}</h1>
@@ -320,6 +320,6 @@ export function HeapDiffPage() {
           </table>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

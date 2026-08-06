@@ -3,7 +3,7 @@ import { createEmptyPipelineState, ingestOtelBatch, summarizePipelineHealth } fr
 import { defaultAlertRules } from '../../shared/engine/alert-engine';
 import type { OtelPipelineState } from '../../shared/engine/otel-pipeline';
 import type { AlertRule } from '../../shared/types/alert';
-import { EmptyState, StatCard, PageHeader, WideUpload } from '../../shared/components';
+import { Page, EmptyState, StatCard, PageHeader, WideUpload } from '../../shared/components';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { useI18n } from '../../shared/i18n/useI18n';
 
@@ -39,7 +39,7 @@ export function OtelIngestPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <Page maxWidth="5xl">
       <PageHeader title={t('otelIngest.title')} description={t('otelIngest.description')} />
 
       <div className="grid grid-cols-4 gap-3 mb-4">
@@ -95,6 +95,6 @@ export function OtelIngestPage() {
           </div>
         </div>
       )}
-    </div>
+    </Page>
   );
 }

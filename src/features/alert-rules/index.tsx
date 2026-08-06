@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRootStore } from '../../stores';
-import { EmptyState } from '../../shared/components';
+import { Page, EmptyState } from '../../shared/components';
 import { generateId } from '../../shared/utils';
 import { useI18n } from '../../shared/i18n/useI18n';
 import type { AlertRule, AlertMetric, AlertOperator, AlertLevel } from '../../shared/types/alert';
@@ -143,7 +143,7 @@ export function AlertRulesPage() {
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('alert.title')}</h1>
@@ -372,6 +372,6 @@ export function AlertRulesPage() {
         </div>,
         document.body,
       )}
-    </div>
+    </Page>
   );
 }

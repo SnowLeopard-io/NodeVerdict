@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { validateEvents } from '../../shared/engine';
-import { UploadHeader, WideUpload, EmptyState, LoadingOverlay, StatCard } from '../../shared/components';
+import { UploadHeader, WideUpload, Page, StatGrid, PageHeader, EmptyState, LoadingOverlay, StatCard } from '../../shared/components';
 import type { TracingEvent } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
 
@@ -42,7 +42,7 @@ export function ValidatorPage() {
 
   if (!validationResults) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('validator.title')}
           description={t('validator.uploadHint')}
@@ -60,28 +60,25 @@ export function ValidatorPage() {
             description={t('validator.uploadDesc')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
+      <PageHeader title={t('validator.validationResults')} />
+
       <div className="mb-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('validator.validationResults')}</h1>
-        </div>
-        <div className="mt-4">
-          <WideUpload api={upload} accept=".json" label={t('validator.uploadTitle')} maxSize={500 * 1024 * 1024} onReset={handleReset} error={error} />
-        </div>
+        <WideUpload api={upload} accept=".json" label={t('validator.uploadTitle')} maxSize={500 * 1024 * 1024} onReset={handleReset} error={error} />
       </div>
 
       {stats && (
-        <div className="grid grid-cols-4 gap-3 mb-4">
+        <StatGrid cols={4}>
           <StatCard title={t('validator.channels')} value={stats.channels.toString()} />
           <StatCard title={t('validator.errors')} value={stats.errors.toString()} color={stats.errors > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'} />
           <StatCard title={t('validator.warnings')} value={stats.warnings.toString()} color={stats.warnings > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-900 dark:text-gray-100'} />
           <StatCard title={t('validator.issues')} value={stats.infos.toString()} />
-        </div>
+        </StatGrid>
       )}
 
       <div className="space-y-4">
@@ -119,6 +116,6 @@ export function ValidatorPage() {
       </div>
 
       <LoadingOverlay visible={upload.loading} />
-    </div>
+    </Page>
   );
 }

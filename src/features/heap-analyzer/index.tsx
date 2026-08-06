@@ -4,7 +4,7 @@ import { analyzeStrings, analyzeExternalMemory, calculateGrowthRate } from '../.
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import type { StringAnalysis, MemoryGrowthRate, HeapAnalysis } from '../../shared/types';
-import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay, Page, StatGrid } from '../../shared/components';
 import { formatBytes } from '../../shared/utils';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
@@ -78,7 +78,7 @@ export function HeapAnalyzerPage() {
 
   if (!heapAnalysis) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <UploadHeader
           title={t('heapAnalyzer.title')}
           description={t('heapAnalyzer.description')}
@@ -96,12 +96,12 @@ export function HeapAnalyzerPage() {
             description={t('heapAnalyzer.uploadHint')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('heapAnalyzer.title')}</h1>
@@ -175,11 +175,11 @@ export function HeapAnalyzerPage() {
         <WideUpload api={upload} accept=".heapsnapshot,.json" label={t('heapAnalyzer.uploadTitle')} maxSize={3 * 1024 * 1024 * 1024} onReset={handleReset} error={displayError} />
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      <StatGrid cols={3}>
         <StatCard title={t('heapAnalyzer.totalSize')} value={formatBytes(heapAnalysis.totalSize)} />
         <StatCard title={t('heapAnalyzer.totalRetained')} value={formatBytes(heapAnalysis.snapshot.totalRetainedSize)} />
         <StatCard title={t('heapAnalyzer.leakSuspects')} value={heapAnalysis.leakSuspects.length.toString()} color={heapAnalysis.leakSuspects.length > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-gray-100'} />
-      </div>
+      </StatGrid>
 
       {/* Top Retained Objects */}
       <div className="mb-6">
@@ -254,12 +254,12 @@ export function HeapAnalyzerPage() {
       {stringAnalysis && (
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">{t('heapAnalyzer.stringAnalysis')}</h2>
-          <div className="grid grid-cols-4 gap-3 mb-4">
+          <StatGrid cols={4}>
             <StatCard title={t('heapAnalyzer.totalStrings')} value={stringAnalysis.totalStrings.toLocaleString()} />
             <StatCard title={t('heapAnalyzer.stringSize')} value={formatBytes(stringAnalysis.totalSelfSize)} />
             <StatCard title={t('heapAnalyzer.uniqueStrings')} value={stringAnalysis.uniqueStrings.toLocaleString()} />
             <StatCard title={t('heapAnalyzer.dedupRatio')} value={(stringAnalysis.dedupRatio * 100).toFixed(1) + '%'} />
-          </div>
+          </StatGrid>
 
           {/* Top Largest Strings */}
           <div className="mb-4">
@@ -322,6 +322,6 @@ export function HeapAnalyzerPage() {
       </div>
 
       <LoadingOverlay visible={upload.loading || heapLoading} />
-    </div>
+    </Page>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { analyzeTracingEvents, buildWaterfall, findBottlenecks } from '../../shared/engine';
 import { useUnifiedFileUpload } from '../../shared/hooks';
-import { PageHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { Page, PageHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
 import { formatDuration } from '../../shared/utils';
@@ -96,7 +96,7 @@ export function PerfComparePage() {
 
   if (!dataA || !dataB) {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <Page maxWidth="3xl">
         <PageHeader title={t('perfCompare.title')} description={t('perfCompare.description')} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -119,12 +119,12 @@ export function PerfComparePage() {
             description={t('perfCompare.description')}
           />
         </div>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="p-6">
+    <Page>
       <div className="mb-4 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('perfCompare.title')}</h1>
@@ -253,7 +253,7 @@ export function PerfComparePage() {
           </div>
         </div>
       )}
-    </div>
+    </Page>
   );
 }
 
