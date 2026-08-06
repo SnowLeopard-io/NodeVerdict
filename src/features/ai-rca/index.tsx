@@ -3,13 +3,15 @@ import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useUnifiedFileUpload } from '../../shared/hooks';
-import { analyzeTraceWithLLM, analyzeTraceLocally, loadRcaConfig, saveRcaConfig, clearRcaConfig, isRcaConfigured } from '../../shared/ai';
+import { analyzeTraceWithLLM, analyzeTraceLocally, loadRcaConfig, saveRcaConfig, clearRcaConfig, isRcaConfigured, askRcaFollowUp, generateFixPlan, localFixSuggestions } from '../../shared/ai';
 import type { RcaConfig } from '../../shared/ai';
+import { fingerprintTrace, recallSimilarFrom, loadRcaHistory, appendRcaHistory } from '../../shared/ai/rca-memory';
+import type { RcaSimilarity } from '../../shared/ai/rca-memory';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import type { TracingWorkerInput, TracingWorkerOutput } from '../../shared/workers/tracing-handler';
 import { FileUpload, EmptyState, StatCard } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
-import type { TraceViewerData, TraceSpan } from '../../shared/types';
+import type { TraceViewerData, TraceSpan, TracingEvent } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
 
 function RcaConfigModal({ open, onClose, onSave }: {
@@ -98,6 +100,7 @@ export function AiRcaPage() {
   const { t, lang } = useI18n();
   const [analysis, setAnalysis] = useState<TraceViewerData | null>(null);
   const [spans, setSpans] = useState<TraceSpan[]>([]);
+  const [rawEvents, setRawEvents] = useState<TracingEvent[]>([]);
   const [report, setReport] = useState<string>('');
   const [reportError, setReportError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -105,6 +108,12 @@ export function AiRcaPage() {
   const [modalSession, setModalSession] = useState(0);
   const reportRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const [memory, setMemory] = useState<RcaSimilarity[]>([]);
+  const [chat, setChat] = useState<{ q: string; a: string }[]>([]);
+  const [question, setQuestion] = useState('');
+  const [chatBusy, setChatBusy] = useState(false);
+  const [fixPlan, setFixPlan] = useState('');
+  const [fixBusy, setFixBusy] = useState(false);
 
   const workerRef = useRef<ReturnType<typeof createWorkerClient<TracingWorkerInput, TracingWorkerOutput>> | null>(null);
   const [rcaLoading, setRcaLoading] = useState(false);
@@ -133,7 +142,7 @@ export function AiRcaPage() {
       setRcaLoading(true);
       try {
         const a = await w.execute({ content, format: 'json' });
-        applyTrace(a);
+        applyTrace(a, extractEvents(content));
       } finally {
         setRcaLoading(false);
       }
@@ -143,7 +152,7 @@ export function AiRcaPage() {
       setRcaLoading(true);
       try {
         const a = await w.execute({ content: '', format: 'ndv', ndvBuffer: buffer });
-        applyTrace(a);
+        applyTrace(a, []);
       } finally {
         setRcaLoading(false);
       }
@@ -151,20 +160,37 @@ export function AiRcaPage() {
   });
   const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
 
-  function applyTrace(a: TraceViewerData) {
+  function extractEvents(content: string): TracingEvent[] {
+    try {
+      const parsed = JSON.parse(content);
+      return Array.isArray(parsed) ? (parsed as TracingEvent[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function applyTrace(a: TraceViewerData, rawEvents: TracingEvent[]) {
     const s = a.spans;
     setAnalysis(a);
     setSpans(s);
+    setRawEvents(rawEvents);
     setReport('');
     setReportError(null);
+    setChat([]);
+    setFixPlan('');
+    setMemory([]);
   }
 
   function handleReset() {
     uploadReset();
     setAnalysis(null);
     setSpans([]);
+    setRawEvents([]);
     setReport('');
     setReportError(null);
+    setChat([]);
+    setFixPlan('');
+    setMemory([]);
   }
 
   async function runDiagnosis(useLocal: boolean) {
@@ -210,6 +236,68 @@ export function AiRcaPage() {
       return;
     }
     await runDiagnosis(false);
+  }
+
+  async function recallMemory() {
+    const features = rawEvents.length > 0 ? fingerprintTrace(rawEvents) : spansToFeatures(spans);
+    setMemory(recallSimilarFrom(loadRcaHistory(), features, 3));
+  }
+
+  async function saveToMemory() {
+    if (!report) return;
+    const features = rawEvents.length > 0 ? fingerprintTrace(rawEvents) : spansToFeatures(spans);
+    appendRcaHistory({
+      id: `${Date.now()}`,
+      ts: Date.now(),
+      lang,
+      title: report.split('\n').find(l => l.startsWith('# '))?.slice(2).slice(0, 40) || 'RCA report',
+      report: report.slice(0, 4000),
+      features,
+    });
+    recallMemory();
+  }
+
+  async function askFollowUp() {
+    const q = question.trim();
+    if (!q || !report || !isRcaConfigured()) return;
+    setChatBusy(true);
+    try {
+      const a = await askRcaFollowUp({ config: loadRcaConfig()!, question: q, context: report, lang });
+      setChat(prev => [...prev, { q, a }]);
+      setQuestion('');
+    } catch (err) {
+      setChat(prev => [...prev, { q, a: `**error:** ${(err as Error).message}` }]);
+    } finally {
+      setChatBusy(false);
+    }
+  }
+
+  async function handleFixPlan() {
+    if (!report) return;
+    if (!isRcaConfigured()) {
+      const offline = localFixSuggestions(report, lang);
+      setFixPlan(offline);
+      return;
+    }
+    setFixBusy(true);
+    try {
+      const plan = await generateFixPlan({ config: loadRcaConfig()!, context: report, lang });
+      setFixPlan(plan);
+    } catch (err) {
+      setFixPlan(`**error:** ${(err as Error).message}\n\n${localFixSuggestions(report, lang)}`);
+    } finally {
+      setFixBusy(false);
+    }
+  }
+
+  function spansToFeatures(spansList: TraceSpan[]): string[] {
+    const set = new Set<string>();
+    for (const s of spansList) {
+      set.add(`ch:${s.channel.toLowerCase()}`);
+      set.add(`op:${(s.operationId ?? '').toLowerCase()}`);
+      if (s.status === 'error') set.add('has:error');
+    }
+    return [...set].slice(0, 400);
   }
 
   const stats = useMemo(() => {
@@ -316,7 +404,87 @@ export function AiRcaPage() {
             {report && !running && (
               <ExportButton filename="ai-rca-report" onExportMarkdown={() => report} />
             )}
+            {report && !running && (
+              <>
+                <button
+                  onClick={saveToMemory}
+                  className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {t('aiRca.saveMemory')}
+                </button>
+                <button
+                  onClick={recallMemory}
+                  className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {t('aiRca.recallMemory')}
+                </button>
+                <button
+                  onClick={handleFixPlan}
+                  disabled={fixBusy}
+                  className="px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                >
+                  {fixBusy ? t('aiRca.planning') : t('aiRca.fixPlan')}
+                </button>
+              </>
+            )}
           </div>
+
+          {memory.length > 0 && (
+            <div className="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('aiRca.memoryTitle')}</p>
+              {memory.map(m => (
+                <div key={m.record.id} className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-gray-700 last:border-0 text-sm">
+                  <span className="text-gray-700 dark:text-gray-300 truncate">{m.record.title}</span>
+                  <span className="text-xs text-gray-400 shrink-0 ml-3">{Math.round(m.score * 100)}%</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {fixPlan && (
+            <div className="mb-4 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('aiRca.fixPlanTitle')}</p>
+                <ExportButton filename="fix-plan" onExportMarkdown={() => fixPlan} />
+              </div>
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{fixPlan}</ReactMarkdown>
+              </div>
+            </div>
+          )}
+
+          {report && !running && (
+            <div className="mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{t('aiRca.followUp')}</p>
+              <div className="max-h-[260px] overflow-auto mb-3 space-y-3">
+                {chat.map((m, i) => (
+                  <div key={i}>
+                    <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-1">Q: {m.q}</p>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.a}</ReactMarkdown>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={question}
+                  onChange={e => setQuestion(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') askFollowUp(); }}
+                  disabled={chatBusy || !isRcaConfigured()}
+                  placeholder={isRcaConfigured() ? t('aiRca.questionPlaceholder') : t('aiRca.needsConfig')}
+                  className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  onClick={askFollowUp}
+                  disabled={chatBusy || !isRcaConfigured() || !question.trim()}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                >
+                  {chatBusy ? t('aiRca.thinking') : t('aiRca.send')}
+                </button>
+              </div>
+            </div>
+          )}
 
           {reportError && (
             <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400">

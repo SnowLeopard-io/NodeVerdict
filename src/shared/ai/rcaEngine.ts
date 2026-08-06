@@ -1,5 +1,6 @@
 import type { TraceViewerData, TraceSpan } from '../types';
 import { buildTracePrompt, buildUserPrompt, buildSystemPrompt, type TracePrompt } from './tracePrompt';
+import { NODE_ECOSYSTEM_KNOWLEDGE } from './knowledge';
 
 /**
  * Auto-RCA engine.
@@ -58,23 +59,28 @@ export function buildRcaPrompt(analysis: TraceViewerData, spans: TraceSpan[], la
   return buildTracePrompt(analysis, spans);
 }
 
-/**
- * Runs the root-cause analysis and returns the full markdown answer.
- * When onStream is provided, chunks are delivered as they arrive.
- */
-export async function analyzeTraceWithLLM(opts: RcaOptions): Promise<string> {
-  const { config, analysis, spans, lang, signal, onStream } = opts;
-  const prompt = buildTracePrompt(analysis, spans);
+export interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
 
+export interface ChatStreamOptions {
+  config: RcaConfig;
+  messages: ChatMessage[];
+  signal?: AbortSignal;
+  temperature?: number;
+  onStream?: (chunk: string) => void;
+}
+
+/** Generic streaming chat completion against the configured OpenAI-compatible API. */
+export async function streamChatCompletion(opts: ChatStreamOptions): Promise<string> {
+  const { config, messages, signal, onStream } = opts;
   const endpoint = config.baseUrl.replace(/\/$/, '') + '/chat/completions';
   const body = {
     model: config.model,
     stream: true,
-    temperature: 0.2,
-    messages: [
-      { role: 'system', content: buildSystemPrompt() },
-      { role: 'user', content: buildUserPrompt(prompt, lang) },
-    ],
+    temperature: opts.temperature ?? 0.2,
+    messages,
   };
 
   const res = await fetch(endpoint, {
@@ -126,6 +132,94 @@ export async function analyzeTraceWithLLM(opts: RcaOptions): Promise<string> {
   }
 
   return full;
+}
+
+/**
+ * Runs the root-cause analysis and returns the full markdown answer.
+ * When onStream is provided, chunks are delivered as they arrive.
+ */
+export async function analyzeTraceWithLLM(opts: RcaOptions): Promise<string> {
+  const { config, analysis, spans, lang, signal, onStream } = opts;
+  const prompt = buildTracePrompt(analysis, spans);
+
+  return streamChatCompletion({
+    config,
+    signal,
+    onStream,
+    messages: [
+      { role: 'system', content: buildSystemPrompt() },
+      { role: 'user', content: buildUserPrompt(prompt, lang) },
+    ],
+  });
+}
+
+/**
+ * Multi-turn follow-up: keep the original report as context, ask a question.
+ * Returns a markdown answer to `question`.
+ */
+export async function askRcaFollowUp(opts: {
+  config: RcaConfig;
+  question: string;
+  context: string;
+  lang: 'en' | 'zh';
+  onStream?: (chunk: string) => void;
+}): Promise<string> {
+  const { config, question, context } = opts;
+  return streamChatCompletion({
+    config,
+    messages: [
+      { role: 'system', content: buildSystemPrompt() },
+      { role: 'user', content: context },
+      { role: 'user', content: question },
+    ],
+  });
+}
+
+/**
+ * Generate a concrete fix plan from a root-cause report.
+ * Asks the model for actionable, file-level remediation steps.
+ */
+export async function generateFixPlan(opts: {
+  config: RcaConfig;
+  context: string;
+  lang: 'en' | 'zh';
+  onStream?: (chunk: string) => void;
+}): Promise<string> {
+  const { config, context, lang } = opts;
+  const instruction = lang === 'zh'
+    ? '基于上面的根因分析，给出可落地的修复计划：按优先级列出每个修复项，包含修改文件/位置、具体改法、验证方式与回归风险。若不确定就说“不确定”，不要编造。'
+    : 'Based on the root-cause analysis above, produce an actionable remediation plan: prioritize each fix, state the file/location to change, the concrete change, how to verify, and regression risk. Say "unsure" rather than inventing details.';
+  return streamChatCompletion({
+    config,
+    messages: [
+      { role: 'system', content: buildSystemPrompt() },
+      { role: 'user', content: context },
+      { role: 'user', content: instruction },
+    ],
+  });
+}
+
+/** Local (offline) fix suggestions derived from the ecosystem knowledge base. */
+export function localFixSuggestions(report: string, lang: 'en' | 'zh'): string {
+  const lines: string[] = [];
+  lines.push(lang === 'zh' ? '## 修复建议（本地知识库）' : '## Fix suggestions (local knowledge base)');
+  const lowered = report.toLowerCase();
+  const matched = NODE_ECOSYSTEM_KNOWLEDGE.filter(r => lowered.includes(r.library.toLowerCase()));
+  if (matched.length === 0) {
+    lines.push('');
+    lines.push(lang === 'zh'
+      ? '未命中知识库条目。配置 AI API 密钥可获得更精确的修复建议。'
+      : 'No knowledge-base rule matched. Configure an AI API key for more precise suggestions.');
+    return lines.join('\n');
+  }
+  for (const rule of matched) {
+    lines.push('');
+    lines.push(`### ${rule.library}`);
+    lines.push(`- ${lang === 'zh' ? '症状' : 'Symptom'}: ${rule.symptom}`);
+    lines.push(`- ${lang === 'zh' ? '可能原因' : 'Likely cause'}: ${rule.likelyCause}`);
+    lines.push(`- ${lang === 'zh' ? '修复' : 'Fix'}: ${rule.fix}`);
+  }
+  return lines.join('\n');
 }
 
 /** Heuristic fallback analysis used when no API key is configured. */

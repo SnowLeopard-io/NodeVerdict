@@ -20,6 +20,12 @@ import { AiRcaPage } from '../features/ai-rca';
 import { TopologyPage } from '../features/topology';
 import { DifferentialDebugPage } from '../features/differential-debug';
 import { JitInsightsPage } from '../features/jit-insights';
+import { CpuProfileDiffPage } from '../features/cpu-profile-diff';
+import { SourceAttributionPage } from '../features/source-attribution';
+import { OtelIngestPage } from '../features/otel-ingest';
+import { ReportDiffPage } from '../features/report-diff';
+import { CiBaselinePage } from '../features/ci-baseline';
+import { ReproGeneratorPage } from '../features/repro-generator';
 import { useEffect, useState } from 'react';
 import { useI18n } from '../shared/i18n/useI18n';
 
@@ -48,6 +54,12 @@ function HomePage() {
     { page: 'ai-rca', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
     { page: 'differential-debug', icon: 'M12 8v-1m0 12v-1m4.95-10.95l-.707.707m-8.486 8.486l-.707.707M21 12h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
     { page: 'tutorial', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
+    { page: 'cpu-profile-diff', icon: 'M3 3v18h18M7 16l4-5 3 3 5-7' },
+    { page: 'source-attribution', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+    { page: 'otel-ingest', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
+    { page: 'report-diff', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4' },
+    { page: 'ci-baseline', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+    { page: 'repro-generator', icon: 'M10 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-4m-1-1l4-4-4-4m-4 4h8' },
   ];
 
   return (
@@ -150,6 +162,12 @@ export function App() {
     { id: 'topology', node: <TopologyPage /> },
     { id: 'differential-debug', node: <DifferentialDebugPage /> },
     { id: 'jit-insights', node: <JitInsightsPage /> },
+    { id: 'cpu-profile-diff', node: <CpuProfileDiffPage /> },
+    { id: 'source-attribution', node: <SourceAttributionPage /> },
+    { id: 'otel-ingest', node: <OtelIngestPage /> },
+    { id: 'report-diff', node: <ReportDiffPage /> },
+    { id: 'ci-baseline', node: <CiBaselinePage /> },
+    { id: 'repro-generator', node: <ReproGeneratorPage /> },
   ];
 
   return (

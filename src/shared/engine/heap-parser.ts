@@ -86,10 +86,17 @@ export function parseHeapSnapshot(raw: string): HeapSnapshot {
     node.edges = count as number;
 
     for (let j = 0; j < (count as number); j++) {
-      if (edgeIdx + 2 >= edgesRaw.length) break;
+      if (edgeIdx + edgeStride > edgesRaw.length) break;
       const edgeTypeName = edgeTypes[edgesRaw[edgeIdx + edgeTypeIdx] as number] as string | undefined;
       const toNodeIdx = Math.floor((edgesRaw[edgeIdx + edgeToNodeIdx] as number) / nodeStride);
-      const toNodeId = nodes[toNodeIdx]?.id ?? 0;
+      // Defensive: a malformed / truncated snapshot may point an edge past the
+      // end of the nodes array. Pushing that index would crash the dominator
+      // walk (undefined.children). Drop the edge instead.
+      if (toNodeIdx < 0 || toNodeIdx >= nodes.length) {
+        edgeIdx += edgeStride;
+        continue;
+      }
+      const toNodeId = nodes[toNodeIdx].id;
       const edge: HeapEdge = {
         type: (edgeTypeName as HeapEdge['type']) ?? 'property',
         name: strings[edgesRaw[edgeIdx + edgeNameIdx] as number] ?? '',
@@ -153,10 +160,17 @@ function computeRetainedSizes(nodes: HeapNode[], edges: HeapEdge[]): void {
   visited[root] = 1;
   while (stack.length > 0) {
     const top = stack[stack.length - 1];
-    const cs = nodes[top[0]].children;
+    const node = nodes[top[0]];
+    // Defensive: never dereference a child index that escaped bounds.
+    if (!node) {
+      post.push(top[0]);
+      stack.pop();
+      continue;
+    }
+    const cs = node.children;
     if (top[1] < cs.length) {
       const c = cs[top[1]++];
-      if (!visited[c]) {
+      if (c >= 0 && c < n && !visited[c]) {
         visited[c] = 1;
         stack.push([c, 0]);
       }

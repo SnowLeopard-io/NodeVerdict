@@ -54,3 +54,31 @@ export interface CpuProfileAnalysis {
   sampleCount: number;
   topFunctions: HotFunction[];
 }
+
+/** A single function-level change between two CPU profiles. */
+export interface CpuProfileDiffEntry {
+  key: string;
+  functionName: string;
+  url: string;
+  line: number;
+  beforeSelfTime: number;
+  afterSelfTime: number;
+  beforeTotalTime: number;
+  afterTotalTime: number;
+  totalDelta: number;
+  /** Relative change of total time vs. the larger of the two samples (0..1). */
+  changePct: number;
+  kind: 'added' | 'removed' | 'grown' | 'shrunk' | 'unchanged';
+}
+
+/** Result of diffing two CPU profiles (e.g. commit A vs commit B). */
+export interface CpuProfileDiff {
+  entries: CpuProfileDiffEntry[];
+  totalBeforeMs: number;
+  totalAfterMs: number;
+  totalDeltaMs: number;
+  grownCount: number;
+  shrunkCount: number;
+  addedCount: number;
+  removedCount: number;
+}

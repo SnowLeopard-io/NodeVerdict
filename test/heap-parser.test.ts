@@ -59,3 +59,19 @@ it('root retained size equals total self size on a 5000-node chain, quickly', ()
   expect(Date.now() - started).toBeLessThan(5000);
   expect(snapshot.nodes[0].retainedSize).toBe(5000);
 });
+
+it('does not crash on a malformed edge that points past the nodes array', () => {
+  // Root with an edge whose to_node index is far beyond the nodes array —
+  // previously the dominator walk read .children of undefined.
+  const raw = buildRaw([
+    { id: 0, name: 'ROOT', self: 10, to: [1] },
+    { id: 1, name: 'A', self: 5, to: [] },
+  ]);
+  const doc = JSON.parse(raw);
+  // Corrupt the single edge's to_node to reference index 999 (node #999).
+  doc.edges[2] = 999 * 5;
+  const snapshot = parseHeapSnapshot(JSON.stringify(doc));
+  expect(snapshot.nodes[0].children.length).toBe(0);
+  expect(snapshot.nodes[0].retainedSize).toBe(10);
+  expect(snapshot.edges.length).toBe(0);
+});

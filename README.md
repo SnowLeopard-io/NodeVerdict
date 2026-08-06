@@ -315,7 +315,7 @@ Track heap snapshot comparison results over time to identify memory trends. Ever
 - **Full history table** — ID, timestamp, label, before/after sizes, retained Δ, and growth rate per recorded comparison
 - **Import / clear** — Import a history file (e.g. `examples/snapshot-history.json`) to load prior runs, or clear all records
 
-![Snapshot History](./introduction/SSnapshotDiffHistory.png)
+![Snapshot History](./introduction/SnapshotDiffHistory.png)
 
 ### 24. Streaming Causal Graph Reconstruction (NEW)
 

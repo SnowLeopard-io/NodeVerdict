@@ -3,7 +3,7 @@ export type { HeapNode, HeapEdge, HeapSnapshot, HotObject, LeakSuspicion, HeapAn
 export type { ReportData } from './report';
 export { REPORT_CURRENT_VERSION } from './report';
 export type { ValidationResult, ValidationIssue } from '../engine/validator';
-export type { CpuProfileNode, CpuProfile, FlameFrame, HotFunction, CpuProfileAnalysis } from './cpu-profile';
+export type { CpuProfileNode, CpuProfile, FlameFrame, HotFunction, CpuProfileAnalysis, CpuProfileDiffEntry, CpuProfileDiff } from './cpu-profile';
 export type { MemoryUsageSnapshot, MemoryTimeline, MemoryGrowthRate, StringAnalysis, GCEntry, GCLogAnalysis, MemoryAnalysis } from './memory';
 export type { AlertMetric, AlertOperator, AlertLevel, AlertRule, FiredAlert, MetricSnapshot } from './alert';
 export type {
