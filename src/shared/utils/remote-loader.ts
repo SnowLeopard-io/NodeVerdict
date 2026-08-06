@@ -50,8 +50,12 @@ export async function loadFileFromUrl(options: RemoteLoadOptions): Promise<Remot
     return { content, totalSize: content.length, chunkCount: 1 };
   }
 
-  // Streaming with Range requests
-  const chunks: string[] = [];
+  // Streaming with Range requests. Chunks are tracked in bytes and decoded once
+  // at the end: decoding each slice with response.text() would advance `loaded`
+  // by UTF-16 code units while ranges are byte-based, drifting the offsets and
+  // corrupting any multi-byte (non-ASCII) content.
+  const chunks: Uint8Array[] = [];
+  const decoder = new TextDecoder();
   let loaded = 0;
   let chunkIndex = 0;
 
@@ -68,16 +72,27 @@ export async function loadFileFromUrl(options: RemoteLoadOptions): Promise<Remot
 
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-    const text = await response.text();
-    chunks.push(text);
-    loaded += text.length;
+    const buffer = await response.arrayBuffer();
+    if (buffer.byteLength === 0) {
+      // Server returned no bytes for a valid range — avoid an infinite loop.
+      throw new Error('Server returned no data for the requested byte range');
+    }
+    chunks.push(new Uint8Array(buffer));
+    loaded += buffer.byteLength;
     chunkIndex++;
 
     onProgress?.(loaded, totalSize);
   }
 
+  const combined = new Uint8Array(loaded);
+  let offset = 0;
+  for (const chunk of chunks) {
+    combined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
   return {
-    content: chunks.join(''),
+    content: decoder.decode(combined),
     totalSize,
     chunkCount: chunkIndex,
   };

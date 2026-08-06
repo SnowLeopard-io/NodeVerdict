@@ -17,9 +17,18 @@ export function CpuProfilerPage() {
   const workerRef = useRef<ReturnType<typeof createWorkerClient<string, CpuProfileAnalysis>> | null>(null);
   const [cpuLoading, setCpuLoading] = useState(false);
 
+  // Lazily create the worker on first use so visiting other pages doesn't spawn
+  // an idle Web Worker at startup.
+  const getWorker = useCallback(() => {
+    if (!workerRef.current) {
+      workerRef.current = createWorkerClient<string, CpuProfileAnalysis>(
+        new Worker(new URL('../../shared/workers/cpu-profile-handler.ts', import.meta.url), { type: 'module' }),
+      );
+    }
+    return workerRef.current;
+  }, []);
+
   useEffect(() => {
-    const worker = new Worker(new URL('../../shared/workers/cpu-profile-handler.ts', import.meta.url), { type: 'module' });
-    workerRef.current = createWorkerClient<string, CpuProfileAnalysis>(worker);
     return () => {
       workerRef.current?.terminate();
       workerRef.current = null;
@@ -39,8 +48,7 @@ export function CpuProfilerPage() {
   }, [analysis, sortBy]);
   const upload = useUnifiedFileUpload({
     onFile: useCallback(async (content: string) => {
-      const w = workerRef.current;
-      if (!w) return;
+      const w = getWorker();
       setCpuLoading(true);
       try {
         const result = await w.execute(content);
@@ -48,7 +56,7 @@ export function CpuProfilerPage() {
       } finally {
         setCpuLoading(false);
       }
-    }, []),
+    }, [getWorker]),
   });
   const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset } = upload;
 

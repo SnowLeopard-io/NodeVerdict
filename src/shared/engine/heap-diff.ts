@@ -70,8 +70,13 @@ export function diffHeapSnapshots(
   // Sort by absolute size delta descending
   nodes.sort((a, b) => Math.abs(b.sizeDelta) - Math.abs(a.sizeDelta));
 
-  const totalSizeBefore = snapshotA.totalSize;
-  const totalSizeAfter = snapshotB.totalSize;
+  // Use retained size for both the summary totals and the per-group rows so the
+  // sizes are on the same basis. Using snapshot.totalSize (sum of self size)
+  // here while grouping by retainedSize would mix on-heap self sizes with
+  // retained (subtree) sizes, making the "before/after/delta" cards disagree
+  // with the type-comparison table.
+  const totalSizeBefore = snapshotA.totalRetainedSize;
+  const totalSizeAfter = snapshotB.totalRetainedSize;
   const totalCountBefore = snapshotA.nodeCount;
   const totalCountAfter = snapshotB.nodeCount;
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { TraceViewerData, TracingAnalysis, HeapAnalysis, ReportData, SnapshotDiffRecord, AlertRule, FiredAlert } from '../shared/types';
+import type { TraceViewerData, TracingAnalysis, HeapAnalysis, ReportData, SnapshotDiffRecord, AlertRule, FiredAlert, TracingEvent } from '../shared/types';
 import type { ValidationResult } from '../shared/engine';
 import { defaultAlertRules } from '../shared/engine';
 
@@ -19,6 +19,8 @@ interface RootState {
   // Trace Viewer slice
   traceData: TraceViewerData | null;
   setTraceData: (data: TraceViewerData | null) => void;
+  traceEvents: TracingEvent[];
+  setTraceEvents: (events: TracingEvent[]) => void;
 
   // Validator slice
   validationResults: ValidationResult[] | null;
@@ -61,6 +63,8 @@ export const useRootStore = create<RootState>((set) => ({
   // Trace Viewer
   traceData: null,
   setTraceData: (data) => set({ traceData: data }),
+  traceEvents: [],
+  setTraceEvents: (events) => set({ traceEvents: events }),
 
   // Validator
   validationResults: null,
@@ -95,6 +99,17 @@ export const useRootStore = create<RootState>((set) => ({
   updateAlertRule: (rule) => set((state) => ({ alertRules: state.alertRules.map(r => r.id === rule.id ? rule : r) })),
   toggleAlertRule: (id) => set((state) => ({ alertRules: state.alertRules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r) })),
   firedAlerts: [],
-  addFiredAlert: (alert) => set((state) => ({ firedAlerts: [alert, ...state.firedAlerts].slice(0, 50) })),
+  addFiredAlert: (alert) => set((state) => {
+    // Dedupe: skip when the same rule just fired within 5s (alerts are evaluated
+    // on every memory tick, which must not flood the list with identical rows).
+    const recent = state.firedAlerts.some(
+      a => a.ruleId === alert.ruleId
+        && a.message === alert.message
+        && alert.timestamp !== undefined
+        && (alert.timestamp - a.timestamp) < 5000,
+    );
+    if (recent) return {};
+    return { firedAlerts: [alert, ...state.firedAlerts].slice(0, 50) };
+  }),
   clearFiredAlerts: () => set({ firedAlerts: [] }),
 }));

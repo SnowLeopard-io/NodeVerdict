@@ -1,14 +1,14 @@
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
-import { encodeNdv } from '../../shared/engine';
+import { encodeNdv, loadTracingData, loadNdvBuffer } from '../../shared/engine';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import type { TracingWorkerInput, TracingWorkerOutput } from '../../shared/workers/tracing-handler';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { WaterfallChart } from './components/WaterfallChart';
 import { BottleneckList } from './components/BottleneckList';
 import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
-import type { TraceViewerData } from '../../shared/types';
+import type { TraceViewerData, TracingEvent } from '../../shared/types';
 import { formatDuration } from '../../shared/utils';
 
 function handleTraceContent(content: string | ArrayBuffer, worker: ReturnType<typeof createWorkerClient<TracingWorkerInput, TracingWorkerOutput>>): Promise<TraceViewerData> {
@@ -18,21 +18,37 @@ function handleTraceContent(content: string | ArrayBuffer, worker: ReturnType<ty
   return worker.execute(input);
 }
 
-function downloadNdv(_events: unknown[]) {
-  // encodeNdv expects TracingEvent[] — for now just inform the user
-  console.warn('NDV export from TraceViewerData is not available; use the raw trace file');
+function downloadNdv(events: TracingEvent[]) {
+  if (events.length === 0) return;
+  const bytes = encodeNdv(events);
+  const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `trace-${Date.now()}.ndv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function TraceViewerPage() {
   const { t } = useI18n();
-  const { traceData, setTraceData } = useRootStore();
+  const { traceData, traceEvents, setTraceData, setTraceEvents } = useRootStore();
 
   const workerRef = useRef<ReturnType<typeof createWorkerClient<TracingWorkerInput, TracingWorkerOutput>> | null>(null);
   const [traceLoading, setTraceLoading] = useState(false);
 
+  // Lazily create the worker on first use so visiting other pages doesn't spawn
+  // an idle Web Worker at startup.
+  const getWorker = useCallback(() => {
+    if (!workerRef.current) {
+      workerRef.current = createWorkerClient<TracingWorkerInput, TracingWorkerOutput>(
+        new Worker(new URL('../../shared/workers/tracing-handler.ts', import.meta.url), { type: 'module' }),
+      );
+    }
+    return workerRef.current;
+  }, []);
+
   useEffect(() => {
-    const worker = new Worker(new URL('../../shared/workers/tracing-handler.ts', import.meta.url), { type: 'module' });
-    workerRef.current = createWorkerClient<TracingWorkerInput, TracingWorkerOutput>(worker);
     return () => {
       workerRef.current?.terminate();
       workerRef.current = null;
@@ -41,33 +57,34 @@ export function TraceViewerPage() {
 
   const upload = useUnifiedFileUpload({
     onFile: useCallback(async (content: string) => {
-      const w = workerRef.current;
-      if (!w) return;
+      const w = getWorker();
       setTraceLoading(true);
       try {
         const data = await handleTraceContent(content, w);
         setTraceData(data);
+        setTraceEvents(loadTracingData(content));
       } finally {
         setTraceLoading(false);
       }
-    }, [setTraceData]),
+    }, [getWorker, setTraceData, setTraceEvents]),
     onBinaryFile: useCallback(async (buffer: ArrayBuffer) => {
-      const w = workerRef.current;
-      if (!w) return;
+      const w = getWorker();
       setTraceLoading(true);
       try {
         const data = await handleTraceContent(buffer, w);
         setTraceData(data);
+        setTraceEvents(loadNdvBuffer(buffer));
       } finally {
         setTraceLoading(false);
       }
-    }, [setTraceData]),
+    }, [getWorker, setTraceData, setTraceEvents]),
   });
   const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
 
   function handleReset() {
     uploadReset();
     setTraceData(null);
+    setTraceEvents([]);
   }
 
   const spans = traceData?.spans ?? [];
@@ -135,7 +152,7 @@ export function TraceViewerPage() {
 
       <div className="mb-4">
         <button
-          onClick={() => downloadNdv([])}
+          onClick={() => downloadNdv(traceEvents)}
           className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
           {t('traceViewer.exportNdv')}

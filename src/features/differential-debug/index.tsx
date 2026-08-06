@@ -19,6 +19,7 @@ export function DifferentialDebugPage() {
   const [fault, setFault] = useState<LoadedRun | null>(null);
   const [analysis, setAnalysis] = useState<DifferentialAnalysis | null>(null);
   const [selectedDivergence, setSelectedDivergence] = useState<number>(0);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const normalUpload = useUnifiedFileUpload({
     onFile: useCallback(async (content: string) => {
@@ -44,19 +45,23 @@ export function DifferentialDebugPage() {
     faultUpload.handleReset();
     setAnalysis(null);
     setSelectedDivergence(0);
+    setAnalyzing(false);
   }
 
   const runAnalysis = useCallback(() => {
-    if (!normal || !fault) return;
+    if (!normal || !fault || analyzing) return;
     setAnalysis(null);
+    setAnalyzing(true);
     try {
       const result = analyzeDifferential(normal.events, fault.events);
       setAnalysis(result);
       setSelectedDivergence(0);
     } catch (err) {
       console.error('Differential analysis failed:', err);
+    } finally {
+      setAnalyzing(false);
     }
-  }, [normal, fault]);
+  }, [normal, fault, analyzing]);
 
   const current = useMemo(() => {
     if (!analysis || analysis.divergences.length === 0) return null;
@@ -109,9 +114,10 @@ export function DifferentialDebugPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={runAnalysis}
-            className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors"
+            disabled={analyzing}
+            className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors disabled:opacity-50"
           >
-            {t('diffDebug.analyze')}
+            {analyzing ? t('diffDebug.analyzing') : t('diffDebug.analyze')}
           </button>
           <button onClick={handleReset} className="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             {t('diffDebug.clearStart')}
@@ -170,7 +176,7 @@ export function DifferentialDebugPage() {
       </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
-      <LoadingOverlay visible={loading} message={t('diffDebug.analyzing')} />
+      <LoadingOverlay visible={loading || analyzing} message={t('diffDebug.analyzing')} />
 
       {!analysis && !loading && (
         <EmptyState title={t('diffDebug.ready')} description={t('diffDebug.analyzeHint')} />

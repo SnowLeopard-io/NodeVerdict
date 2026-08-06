@@ -98,4 +98,27 @@ describe('IncrementalJsonParser', () => {
     expect(p.next()).toBe('3');
     expect(p.isDone).toBe(true);
   });
+
+  it('does not drop a scalar split mid-token and terminated by "]"', () => {
+    const p = new IncrementalJsonParser();
+    p.push('[123');
+    p.push('4');
+    p.push('5]');
+    const out = feedAll(p, []);
+    expect(out).toEqual(['12345']);
+    expect(p.isDone).toBe(true);
+  });
+
+  it('does not drop a trailing scalar inside an object when split across chunks', () => {
+    const p = new IncrementalJsonParser();
+    p.push('[{"n":1234');
+    p.push('5.67},');
+    const out = feedAll(p, []);
+    expect(out).toEqual(['{"n":12345.67}']);
+  });
+
+  it('keeps every split of a scalar-heavy array identical', () => {
+    const text = '[12345.67,true,null,-1.5e3,0,999999999999]';
+    everySplit(text, () => new IncrementalJsonParser());
+  });
 });

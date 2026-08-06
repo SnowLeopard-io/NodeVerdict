@@ -25,13 +25,21 @@ export function HeapAnalyzerPage() {
   const [stringAnalysis, setStringAnalysis] = useState<StringAnalysis | null>(null);
   const [externalMemory, setExternalMemory] = useState<{totalExternal: number; totalArrayBuffers: number; externalStrings: number; externalPercent: number} | null>(null);
 
-  // Persistent heap worker for parsing
+  // Persistent heap worker for parsing, created lazily on first use so visiting
+  // other pages doesn't spawn an idle Web Worker at startup.
   const heapWorkerRef = useRef<ReturnType<typeof createWorkerClient<string, HeapAnalysis>> | null>(null);
   const [heapLoading, setHeapLoading] = useState(false);
 
+  const getHeapWorker = useCallback(() => {
+    if (!heapWorkerRef.current) {
+      heapWorkerRef.current = createWorkerClient<string, HeapAnalysis>(
+        new Worker(new URL('../../shared/workers/heap-handler.ts', import.meta.url), { type: 'module' }),
+      );
+    }
+    return heapWorkerRef.current;
+  }, []);
+
   useEffect(() => {
-    const worker = new Worker(new URL('../../shared/workers/heap-handler.ts', import.meta.url), { type: 'module' });
-    heapWorkerRef.current = createWorkerClient<string, HeapAnalysis>(worker);
     return () => {
       heapWorkerRef.current?.terminate();
       heapWorkerRef.current = null;
@@ -42,9 +50,7 @@ export function HeapAnalyzerPage() {
     onFile: useCallback(async (content: string) => {
       setHeapLoading(true);
       try {
-        const worker = heapWorkerRef.current;
-        if (!worker) throw new Error('Heap worker not initialized');
-        const analysis = await worker.execute(content);
+        const analysis = await getHeapWorker().execute(content);
         setHeapAnalysis(analysis);
         // These are lightweight and can run on the main thread
         const stringResult = analyzeStrings(analysis.snapshot);
@@ -54,7 +60,7 @@ export function HeapAnalyzerPage() {
       } finally {
         setHeapLoading(false);
       }
-    }, [setHeapAnalysis, setStringAnalysis, setExternalMemory]),
+    }, [getHeapWorker, setHeapAnalysis, setStringAnalysis, setExternalMemory]),
   });
   const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
 

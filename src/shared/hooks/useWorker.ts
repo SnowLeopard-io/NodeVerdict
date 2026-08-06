@@ -5,6 +5,8 @@ import type { WorkerHandler } from '../workers/worker-factory';
 interface UseWorkerOptions {
   /** Whether to keep the worker alive between calls (default: true) */
   persistent?: boolean;
+  /** Milliseconds before an in-flight call rejects with a timeout error (default: 60000) */
+  timeoutMs?: number;
 }
 
 interface UseWorkerState<TInput, TOutput> {
@@ -21,7 +23,7 @@ export function useWorker<TInput, TOutput>(
   workerUrl: string,
   options: UseWorkerOptions = {},
 ) {
-  const { persistent = true } = options;
+  const { persistent = true, timeoutMs = 60_000 } = options;
   const clientRef = useRef<ReturnType<typeof createWorkerClient<TInput, TOutput>> | null>(null);
   const [state, setState] = useState<UseWorkerState<TInput, TOutput>>({
     loading: false,
@@ -40,10 +42,10 @@ export function useWorker<TInput, TOutput>(
   const getClient = useCallback(() => {
     if (!clientRef.current) {
       const worker = new Worker(new URL(workerUrl, import.meta.url), { type: 'module' });
-      clientRef.current = createWorkerClient<TInput, TOutput>(worker);
+      clientRef.current = createWorkerClient<TInput, TOutput>(worker, timeoutMs);
     }
     return clientRef.current;
-  }, [workerUrl]);
+  }, [workerUrl, timeoutMs]);
 
   const execute = useCallback(async (input: TInput): Promise<TOutput> => {
     setState({ loading: true, error: null, result: null });

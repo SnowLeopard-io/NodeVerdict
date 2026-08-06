@@ -248,6 +248,7 @@ const en: Record<string, string> = {
   'eventViewer.error': 'Error',
   'eventViewer.errorRate': 'Error Rate',
   'eventViewer.errors': 'Errors',
+  'eventViewer.rowCount': '{count} events shown',
   'eventViewer.errorsCount': '{count} errors',
   'eventViewer.eventDetail': 'Event Details',
   'eventViewer.eventTimeline': 'Event Timeline',

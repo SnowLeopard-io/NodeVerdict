@@ -80,6 +80,12 @@ function gcKindColor(kind: string): string {
 type SnapState = 'idle' | 'receiving' | 'ready';
 type CpuProfileState = 'idle' | 'receiving' | 'ready';
 
+/** Coerce an unknown numeric field to a finite number, defaulting to 0. */
+function toFinite(v: unknown): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
 export function LiveMonitorPage() {
   const { t } = useI18n();
   // Connection
@@ -103,6 +109,17 @@ export function LiveMonitorPage() {
 
   // Memory
   const [memoryData, setMemoryData] = useState<{ rss: number; heapTotal: number; heapUsed: number; external: number } | null>(null);
+
+  // Running high-water marks for RSS/external gauges (no fixed "total" exists).
+  const memoryPeaks = useRef({ rss: 0, external: 0 });
+  useEffect(() => {
+    if (!memoryData) return;
+    const peaks = memoryPeaks.current;
+    if (memoryData.rss > peaks.rss) peaks.rss = memoryData.rss;
+    if (memoryData.external > peaks.external) peaks.external = memoryData.external;
+  }, [memoryData]);
+  const rssPeak = memoryPeaks.current.rss || 1;
+  const externalPeak = memoryPeaks.current.external || 1;
 
   // Tracing
   const [tracingActive, setTracingActive] = useState(false);
@@ -377,20 +394,22 @@ export function LiveMonitorPage() {
   function tryExtractGcEvent(msg: Record<string, any>) {
     const data = msg.data ?? msg;
     const kind = msg.kind ?? data.kind ?? data.gcType;
-    const reclaimedMb = data.reclaimedMb ?? data.reclaimed ?? data.gcBytes / (1024 * 1024);
+    const gcBytes = data.gcBytes;
+    const rawReclaimed = data.reclaimedMb ?? data.reclaimed ?? (gcBytes != null ? gcBytes / (1024 * 1024) : undefined);
+    const reclaimedMb = toFinite(rawReclaimed);
     const heapUsed = data.heapUsed ?? data.heap_used;
     const isGcType = msg.type?.includes('gc-event') || msg.type === 'gc';
 
     if (isGcType || (kind && (heapUsed != null || reclaimedMb != null))) {
       setGcEvents(prev => [{
         kind: String(kind),
-        durationMs: Number(data.durationMs ?? data.duration ?? 0),
-        reclaimedMb: Number(reclaimedMb ?? 0),
-        intervalMs: Number(data.intervalMs ?? 0),
-        rss: Number(data.rss ?? 0),
-        heapUsed: Number(heapUsed ?? 0),
-        heapTotal: Number(data.heapTotal ?? 0),
-        timestamp: Number(msg.timestamp ?? data.timestamp ?? Date.now()),
+        durationMs: toFinite(data.durationMs ?? data.duration),
+        reclaimedMb,
+        intervalMs: toFinite(data.intervalMs),
+        rss: toFinite(data.rss),
+        heapUsed: toFinite(heapUsed),
+        heapTotal: toFinite(data.heapTotal),
+        timestamp: toFinite(msg.timestamp ?? data.timestamp ?? Date.now()),
       }, ...prev].slice(0, 100));
       return true;
     }
@@ -660,20 +679,39 @@ export function LiveMonitorPage() {
 
   // Alert evaluation
   const { alertRules, addFiredAlert, firedAlerts } = useRootStore();
+  const lastAlertAtRef = useRef(new Map<string, number>());
+  const eventRateRef = useRef<{ at: number; count: number } | null>(null);
   useEffect(() => {
     if (!memoryData) return;
     const errorEvents = tracingEvents.filter(e => e.eventType.toLowerCase().includes('error'));
     const traceErrorRate = tracingEvents.length > 0 ? (errorEvents.length / tracingEvents.length) * 100 : 0;
+    // eventRate is events/second, not the cumulative count. Sample the delta
+    // since the previous tick so the value is actually a rate.
+    const now = Date.now();
+    const last = eventRateRef.current;
+    let eventRate = 0;
+    if (last) {
+      const dt = (now - last.at) / 1000;
+      if (dt > 0) eventRate = (tracingEvents.length - last.count) / dt;
+    }
+    eventRateRef.current = { at: now, count: tracingEvents.length };
+
     const snapshot = buildMetricSnapshot({
       memoryData,
       memoryHistory,
       errorRate: traceErrorRate,
-      eventRate: tracingEvents.length,
+      eventRate,
     });
     const fired = evaluateAlerts(alertRules, snapshot);
-    if (fired.length > 0) {
-      fired.forEach(f => addFiredAlert(f));
-      fired.forEach(f => addLog(t('liveMonitor.log.alert').replace('{level}', f.level).replace('{message}', f.message), f.level === 'critical' ? 'error' : 'info'));
+    const cooldown = lastAlertAtRef.current;
+    for (const f of fired) {
+      // Cooldown per rule so a persistent threshold doesn't spam identical
+      // alerts on every memory tick.
+      const lastAt = cooldown.get(f.ruleId) ?? 0;
+      if (now - lastAt < 10_000) continue;
+      cooldown.set(f.ruleId, now);
+      addFiredAlert(f);
+      addLog(t('liveMonitor.log.alert').replace('{level}', f.level).replace('{message}', f.message), f.level === 'critical' ? 'error' : 'info');
     }
   }, [memoryData, alertRules, tracingEvents, memoryHistory]);
 
@@ -827,9 +865,9 @@ export function LiveMonitorPage() {
             {/* Memory Gauges Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <MemoryGauge used={memoryData?.heapUsed ?? 0} total={memoryData?.heapTotal ?? 1} label={t('liveMonitor.heapUsed')} color="#22c55e" />
-              <MemoryGauge used={memoryData?.rss ?? 0} total={memoryData?.rss ?? 1} label={t('liveMonitor.rss')} color="#3b82f6" />
-              <MemoryGauge used={memoryData?.external ?? 0} total={(memoryData?.heapTotal ?? 1)} label={t('liveMonitor.external')} color="#f97316" />
-              <MemoryGauge used={((memoryData?.heapUsed ?? 0) / ((memoryData?.heapTotal ?? 1) || 1)) * 100} total={100} label={t('liveMonitor.heapPercent')} color="#8b5cf6" />
+              <MemoryGauge used={memoryData?.rss ?? 0} total={rssPeak} label={t('liveMonitor.rss')} color="#3b82f6" />
+              <MemoryGauge used={memoryData?.external ?? 0} total={externalPeak} label={t('liveMonitor.external')} color="#f97316" />
+              <MemoryGauge used={memoryData?.heapUsed ?? 0} total={memoryData?.rss && memoryData.rss > 0 ? memoryData.rss : 1} label={t('liveMonitor.heapPercent')} color="#8b5cf6" />
             </div>
 
             {/* Real-time Charts Row */}

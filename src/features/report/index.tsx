@@ -27,13 +27,20 @@ export function ReportPage() {
   const upload = useUnifiedFileUpload({ onFile: handleFileRead });
   const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset } = upload;
 
-  // Check URL hash for shared reports
+  // Check URL hash for shared reports. Listens to hashchange so navigating with
+  // the browser back/forward buttons (or pasting a share link while the page is
+  // already open) also loads the report.
   useEffect(() => {
-    if (!reportData && window.location.hash) {
-      const decoded = decodeReportFromHash(window.location.hash);
+    const applyHash = () => {
+      const hash = window.location.hash;
+      if (!hash) return;
+      const decoded = decodeReportFromHash(hash);
       if (decoded) setReportData(decoded);
-    }
-  }, []);
+    };
+    applyHash();
+    window.addEventListener('hashchange', applyHash);
+    return () => window.removeEventListener('hashchange', applyHash);
+  }, [setReportData]);
 
   const reportUrl = useMemo(() => {
     if (!reportData) return '';
@@ -148,7 +155,7 @@ export function ReportPage() {
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">{t('report.heapAnalysis')}</h2>
           <div className="grid grid-cols-3 gap-3">
-            <StatCard title={t('report.findings.totalSize').replace('{size}', '')} value={`${(reportData.heapAnalysis.totalSize / 1024 / 1024).toFixed(1)}MB`} />
+            <StatCard title={t('report.findings.totalSize').replace('{size}', `${(reportData.heapAnalysis.totalSize / 1024 / 1024).toFixed(1)}MB`)} value={`${(reportData.heapAnalysis.totalSize / 1024 / 1024).toFixed(1)}MB`} />
             <StatCard title={t('report.totalEvents')} value={reportData.heapAnalysis.topObjects.length.toString()} />
             <StatCard title={t('report.findings.leakSuspects').replace('{count}', reportData.heapAnalysis.leakCount.toString())} value={reportData.heapAnalysis.leakCount.toString()} color={reportData.heapAnalysis.leakCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900'} />
           </div>
@@ -292,7 +299,7 @@ function exportHtmlReport(reportData: ReportData, t: (key: string) => string): v
   a.href = url;
   a.download = 'nodeverdict-report.html';
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function escapeHtml(str: string): string {

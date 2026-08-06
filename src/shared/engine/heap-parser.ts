@@ -103,7 +103,7 @@ export function parseHeapSnapshot(raw: string): HeapSnapshot {
   }
 
   // Compute retained size
-  computeRetainedSizes(nodes);
+  computeRetainedSizes(nodes, edges);
 
   const totalSize = nodes.reduce((sum, n) => sum + n.selfSize, 0);
   const totalRetainedSize = nodes.reduce((sum, n) => sum + n.retainedSize, 0);
@@ -117,34 +117,106 @@ function buildFieldIndex(fields: string[]): Map<string, number> {
   return map;
 }
 
-function computeRetainedSizes(nodes: HeapNode[]): void {
-  const nodeMap = new Map(nodes.map(n => [n.id, n]));
-  // Build index → id lookup for child traversal
-  const indexToId = new Map<number, number>();
-  for (let i = 0; i < nodes.length; i++) {
-    indexToId.set(i, nodes[i].id);
+/**
+ * Compute retained sizes via a dominator tree.
+ *
+ * A node's retained set is the nodes reachable from it only through it
+ * (i.e. everything in its dominator-tree subtree). Computing this with a full
+ * DFS *per node* is O(N * (N + E)) and times out on real multi-MB snapshots.
+ *
+ * Instead we build the dominator tree with the iterative Cooper–Harvey–Kennedy
+ * algorithm, which is O(N + E) in practice on heap graphs (near-trees) and
+ * guarantees no unbounded quadratic blow-up. Shared descendants are attributed
+ * to their nearest dominator, which matches DevTools "retained size" semantics.
+ */
+function computeRetainedSizes(nodes: HeapNode[], edges: HeapEdge[]): void {
+  const n = nodes.length;
+  if (n === 0) return;
+
+  const idToIndex = new Map<number, number>();
+  for (let i = 0; i < n; i++) idToIndex.set(nodes[i].id, i);
+
+  const preds: number[][] = Array.from({ length: n }, () => []);
+  for (const e of edges) {
+    const f = idToIndex.get(e.fromNode);
+    const t = idToIndex.get(e.toNode);
+    if (f === undefined || t === undefined || f === t) continue;
+    preds[t].push(f);
   }
-  if (nodeMap.size === 0) return;
 
-  for (const node of nodes) {
-    const visited = new Set<number>();
-    const stack = [node.id];
-    let retained = 0;
+  const root = idToIndex.get(0) ?? 0;
 
-    while (stack.length > 0) {
-      const id = stack.pop()!;
-      if (visited.has(id)) continue;
-      visited.add(id);
-      const n = nodeMap.get(id);
-      if (!n) continue;
-      retained += n.selfSize;
-      for (const childIdx of n.children) {
-        const childId = indexToId.get(childIdx);
-        if (childId !== undefined && !visited.has(childId)) stack.push(childId);
+  // Reverse postorder over the subgraph reachable from the root.
+  const visited = new Uint8Array(n);
+  const post: number[] = [];
+  const stack: number[][] = [[root, 0]];
+  visited[root] = 1;
+  while (stack.length > 0) {
+    const top = stack[stack.length - 1];
+    const cs = nodes[top[0]].children;
+    if (top[1] < cs.length) {
+      const c = cs[top[1]++];
+      if (!visited[c]) {
+        visited[c] = 1;
+        stack.push([c, 0]);
+      }
+    } else {
+      post.push(top[0]);
+      stack.pop();
+    }
+  }
+  // Reverse: parents now precede their descendants (Cooper's RPO).
+  post.reverse();
+
+  const rpoNum = new Int32Array(n).fill(-1);
+  for (let i = 0; i < post.length; i++) rpoNum[post[i]] = i;
+
+  const idom = new Int32Array(n).fill(-1);
+  idom[root] = root;
+
+  const intersect = (a: number, b: number): number => {
+    while (a !== b) {
+      if (rpoNum[a] < rpoNum[b]) b = idom[b];
+      else a = idom[a];
+    }
+    return a;
+  };
+
+  // Iterate until the idom assignment stabilizes (1–2 passes on heap graphs).
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const b of post) {
+      if (b === root) continue;
+      let newIdom = -1;
+      for (const p of preds[b]) {
+        if (!visited[p] || idom[p] === -1) continue;
+        newIdom = newIdom === -1 ? p : intersect(p, newIdom);
+      }
+      if (newIdom !== -1 && idom[b] !== newIdom) {
+        idom[b] = newIdom;
+        changed = true;
       }
     }
+  }
 
-    node.retainedSize = retained;
+  // Accumulate retained sizes bottom-up over the dominator tree.
+  const domChildren: number[][] = Array.from({ length: n }, () => []);
+  for (let i = 0; i < n; i++) {
+    if (i !== root && idom[i] !== -1) domChildren[idom[i]].push(i);
+  }
+  // `post` is parents-before-children; iterate in reverse so dom-tree children
+  // (which follow their idom in the order) are finalized first.
+  for (let i = post.length - 1; i >= 0; i--) {
+    const v = post[i];
+    let retained = nodes[v].selfSize;
+    for (const c of domChildren[v]) retained += nodes[c].retainedSize;
+    nodes[v].retainedSize = retained;
+  }
+
+  // Nodes not reachable from any root are not retained by anything.
+  for (let i = 0; i < n; i++) {
+    if (!visited[i]) nodes[i].retainedSize = nodes[i].selfSize;
   }
 }
 

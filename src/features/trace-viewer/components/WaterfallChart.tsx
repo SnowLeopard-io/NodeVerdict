@@ -108,7 +108,12 @@ export function WaterfallChart({ spans }: WaterfallChartProps) {
     probe.remove();
 
     const minTime = d3.min(rows, s => s.startTime) ?? 0;
-    const maxTime = d3.max(rows, s => s.endTime) ?? 0;
+    let maxTime = d3.max(rows, s => s.endTime) ?? 0;
+    // Guard against a degenerate/zero-width time domain: all spans share a single
+    // timestamp (e.g. a loaded-but-empty trace), which would otherwise produce a
+    // NaN linear scale and invisible bars.
+    if (!Number.isFinite(minTime)) maxTime = 1;
+    if (maxTime <= minTime) maxTime = minTime + 1;
     const xScale = d3.scaleLinear()
       .domain([minTime, maxTime])
       .range([barStart, width]);

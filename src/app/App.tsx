@@ -20,7 +20,7 @@ import { AiRcaPage } from '../features/ai-rca';
 import { TopologyPage } from '../features/topology';
 import { DifferentialDebugPage } from '../features/differential-debug';
 import { JitInsightsPage } from '../features/jit-insights';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useI18n } from '../shared/i18n/useI18n';
 
 function HomePage() {
@@ -115,6 +115,19 @@ export function App() {
     }
   }, [darkMode]);
 
+  // Lazy-mount: only the current (and previously visited) pages are rendered so
+  // idle pages don't spawn workers, timers, or polling at startup. Once a page is
+  // visited it stays mounted to preserve its local state across navigation.
+  const [mountedPages, setMountedPages] = useState<Set<Page>>(() => new Set([currentPage]));
+  useEffect(() => {
+    setMountedPages(prev => {
+      if (prev.has(currentPage)) return prev;
+      const next = new Set(prev);
+      next.add(currentPage);
+      return next;
+    });
+  }, [currentPage]);
+
   const pages: { id: Page; node: React.ReactNode }[] = [
     { id: 'home', node: <HomePage /> },
     { id: 'event-viewer', node: <EventViewerPage /> },
@@ -147,7 +160,7 @@ export function App() {
           className={page.id === 'home' ? 'animate-fade-in' : 'animate-fade-up'}
           style={{ display: currentPage === page.id ? 'block' : 'none' }}
         >
-          {page.node}
+          {mountedPages.has(page.id) ? page.node : null}
         </div>
       ))}
     </AppShell>

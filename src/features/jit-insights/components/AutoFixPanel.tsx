@@ -66,7 +66,7 @@ export function AutoFixPanel({ findings }: Props) {
     a.href = url;
     a.download = `${filename.replace(/\.[^.]*$/, '')}.fixed.js`;
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   return (

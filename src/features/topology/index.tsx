@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { useUnifiedFileUpload } from '../../shared/hooks';
-import { analyzeTracingEvents, buildWaterfall, buildDependencies, buildCausalGraph, findBottlenecks, loadTracingData, loadNdvBuffer } from '../../shared/engine';
+import { loadTracingData, loadNdvBuffer } from '../../shared/engine';
 import { analyzeDistributed } from '../../shared/distributed';
 import type { TopologyGraph, RootCauseReport, ServiceNode, ServiceHealth } from '../../shared/distributed';
-import type { TracingEvent, TraceViewerData, TraceSpan } from '../../shared/types';
+import type { TracingEvent, TraceViewerData } from '../../shared/types';
 import { useRootStore, useUIStore } from '../../stores';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
@@ -21,15 +21,6 @@ const HEALTH_DOT: Record<ServiceHealth, string> = {
   faulty: 'bg-red-500',
 };
 
-function flattenChildren(span: TraceSpan): TraceSpan[] {
-  const result: TraceSpan[] = [];
-  for (const child of span.children) {
-    result.push(child);
-    result.push(...flattenChildren(child));
-  }
-  return result;
-}
-
 export function TopologyPage() {
   const { t } = useI18n();
   const darkMode = useUIStore(s => s.darkMode);
@@ -45,9 +36,18 @@ export function TopologyPage() {
   const workerRef = useRef<ReturnType<typeof createWorkerClient<TracingWorkerInput, TracingWorkerOutput>> | null>(null);
   const [topologyLoading, setTopologyLoading] = useState(false);
 
+  // Lazily create the worker on first use so visiting other pages doesn't
+  // spawn an idle Web Worker at startup.
+  const getWorker = useCallback(() => {
+    if (!workerRef.current) {
+      workerRef.current = createWorkerClient<TracingWorkerInput, TracingWorkerOutput>(
+        new Worker(new URL('../../shared/workers/tracing-handler.ts', import.meta.url), { type: 'module' }),
+      );
+    }
+    return workerRef.current;
+  }, []);
+
   useEffect(() => {
-    const worker = new Worker(new URL('../../shared/workers/tracing-handler.ts', import.meta.url), { type: 'module' });
-    workerRef.current = createWorkerClient<TracingWorkerInput, TracingWorkerOutput>(worker);
     return () => {
       workerRef.current?.terminate();
       workerRef.current = null;
@@ -56,21 +56,20 @@ export function TopologyPage() {
 
   const upload = useUnifiedFileUpload({
     onFile: useCallback(async (content: string) => {
-      const w = workerRef.current;
-      if (!w) return;
+      const w = getWorker();
       setTopologyLoading(true);
       try {
         const data = await w.execute({ content, format: 'json' });
-        // Parse raw events on main thread for distributed analysis
+        // The worker returns the viewer model but not the raw event list, which
+        // the distributed analysis needs; parse the events once on the main thread.
         const evts = loadTracingData(content);
         applyEvents(evts, data);
       } finally {
         setTopologyLoading(false);
       }
-    }, []),
+    }, [getWorker]),
     onBinaryFile: useCallback(async (buffer: ArrayBuffer) => {
-      const w = workerRef.current;
-      if (!w) return;
+      const w = getWorker();
       setTopologyLoading(true);
       try {
         const data = await w.execute({ content: '', format: 'ndv', ndvBuffer: buffer });
@@ -79,12 +78,11 @@ export function TopologyPage() {
       } finally {
         setTopologyLoading(false);
       }
-    }, []),
+    }, [getWorker]),
   });
   const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
 
    function applyEvents(evts: TracingEvent[], viewerData: TraceViewerData) {
-    const analysis = analyzeTracingEvents(evts);
     const result = analyzeDistributed(evts);
     setGraph(result.graph);
     setReport(result.report);
@@ -103,25 +101,8 @@ export function TopologyPage() {
 
   function openTraceViewer() {
     if (events.length === 0) return;
-    // Re-parse through the Worker for the viewer page
-    // For now, compute on main thread (events are already loaded)
-    const analysis = analyzeTracingEvents(events);
-    const graph = buildCausalGraph(analysis.events);
-    const spans = buildWaterfall(analysis.operations, analysis.events, graph);
-    const dependencies = buildDependencies(analysis.operations, graph);
-    const allSpans = spans.flatMap(s => [s, ...flattenChildren(s)]);
-    const bottlenecks = findBottlenecks(allSpans);
-    setTraceData({
-      channelStats: analysis.channelStats,
-      totalEvents: analysis.totalEvents,
-      totalOperations: analysis.totalOperations,
-      errorRate: analysis.errorRate,
-      timeRange: analysis.timeRange,
-      channels: analysis.channels,
-      spans,
-      dependencies,
-      bottlenecks,
-    });
+    // applyEvents already computed and stored the full TraceViewerData, so we
+    // can navigate without re-running the expensive analysis on the main thread.
     navigate('trace-viewer');
   }
 

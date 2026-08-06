@@ -172,40 +172,31 @@ function renderOtherFields(context: Record<string, unknown>, exclude: string[], 
 }
 
 function highlightSql(sql: string): string {
-  // First, HTML-escape the input to prevent XSS
+  // First, HTML-escape the input to prevent XSS.
   const escapeHtml = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-  const keywords = ['SELECT', 'FROM', 'WHERE', 'INSERT', 'INTO', 'VALUES', 'UPDATE', 'SET',
+  const keywords = new Set(['SELECT', 'FROM', 'WHERE', 'INSERT', 'INTO', 'VALUES', 'UPDATE', 'SET',
     'DELETE', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'OUTER', 'ON', 'AND', 'OR', 'NOT',
     'IN', 'LIKE', 'BETWEEN', 'ORDER', 'BY', 'GROUP', 'HAVING', 'LIMIT', 'OFFSET',
     'AS', 'DISTINCT', 'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'EXISTS', 'UNION', 'CASE',
-    'WHEN', 'THEN', 'ELSE', 'END', 'NULL', 'IS', 'TRUE', 'FALSE'];
+    'WHEN', 'THEN', 'ELSE', 'END', 'NULL', 'IS', 'TRUE', 'FALSE']);
 
-  // Use a placeholder to avoid matching inside already-replaced HTML spans
-  const PLACEHOLDER = '\x00HL\x00';
-  let highlighted = escapeHtml(sql);
+  // Single leftmost-match pass: strings and comments are matched before words
+  // and numbers, so tokens inside them are never re-highlighted (and no
+  // placeholder collisions can corrupt the output).
+  const TOKEN = /(?:'[^']*'|--[^\n]*)|(\b\d[\d.eE+-]*\b)|(\b[A-Za-z_][A-Za-z0-9_]*\b)/g;
 
-  // Highlight keywords
-  for (const kw of keywords) {
-    const regex = new RegExp(`\\b${kw}\\b`, 'gi');
-    highlighted = highlighted.replace(regex, match => `${PLACEHOLDER}K${match}${PLACEHOLDER}`);
-  }
-  // Highlight strings (single-quoted)
-  highlighted = highlighted.replace(/'[^']*'/g, match => `${PLACEHOLDER}S${match}${PLACEHOLDER}`);
-  // Highlight comments
-  highlighted = highlighted.replace(/--.*$/gm, match => `${PLACEHOLDER}C${match}${PLACEHOLDER}`);
-  // Highlight numbers (only those not inside placeholders)
-  highlighted = highlighted.replace(/\b(\d+)\b/g, (match) => `${PLACEHOLDER}N${match}${PLACEHOLDER}`);
-
-  // Now replace placeholders with actual HTML spans
-  highlighted = highlighted
-    .replace(/\x00HLK(.+?)\x00HL/g, '<span class="text-purple-700 font-semibold">$1</span>')
-    .replace(/\x00HLS(.+?)\x00HL/g, '<span class="text-green-600">$1</span>')
-    .replace(/\x00HLC(.+?)\x00HL/g, '<span class="text-gray-500 italic">$1</span>')
-    .replace(/\x00HLN(.+?)\x00HL/g, '<span class="text-yellow-600">$1</span>');
-
-  return highlighted;
+  return escapeHtml(sql).replace(TOKEN, (match, num, word) => {
+    if (num !== undefined) return '<span class="text-yellow-600">' + match + '</span>';
+    if (word !== undefined && keywords.has(word.toUpperCase())) {
+      return '<span class="text-purple-700 font-semibold">' + word + '</span>';
+    }
+    if (match.startsWith("'")) return '<span class="text-green-600">' + match + '</span>';
+    if (match.startsWith('--')) return '<span class="text-gray-500 italic">' + match + '</span>';
+    // Plain text: leave as-is.
+    return match;
+  });
 }
 
 export function EventDetail({ event, onClose }: EventDetailProps) {

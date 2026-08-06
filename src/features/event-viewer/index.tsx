@@ -30,8 +30,9 @@ export function EventViewerPage() {
    const handleAnalysis = useCallback((analysis: TracingAnalysis, meta: TraceStreamResult['meta']) => {
      setTracingAnalysis(analysis);
      setSelectedChannels(analysis.channels);
+     setSelectedEventIndex(null);
      setStreamMeta({ truncated: meta.truncated, eventsSeen: meta.eventsSeen });
-   }, [setTracingAnalysis, setSelectedChannels]);
+   }, [setTracingAnalysis, setSelectedChannels, setSelectedEventIndex]);
 
    const upload = useUnifiedFileUpload({ onAnalysis: handleAnalysis });
    const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
@@ -51,9 +52,9 @@ export function EventViewerPage() {
    }, [tracingAnalysis, selectedChannels]);
 
    const selectedEvent = useMemo(() => {
-     if (selectedEventIndex === null || !tracingAnalysis) return null;
-     return tracingAnalysis.events[selectedEventIndex] ?? null;
-   }, [selectedEventIndex, tracingAnalysis]);
+     if (selectedEventIndex === null) return null;
+     return filteredEvents[selectedEventIndex] ?? null;
+   }, [selectedEventIndex, filteredEvents]);
 
   if (!tracingAnalysis) {
     return (

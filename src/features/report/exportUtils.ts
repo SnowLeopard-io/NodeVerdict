@@ -156,5 +156,6 @@ export function downloadReport(content: string, filename: string, type: string) 
   a.href = url;
   a.download = filename;
   a.click();
-  URL.revokeObjectURL(url);
+  // Defer revocation so the download starts before the object URL is released.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }

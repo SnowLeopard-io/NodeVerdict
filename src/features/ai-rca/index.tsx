@@ -104,13 +104,23 @@ export function AiRcaPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSession, setModalSession] = useState(0);
   const reportRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const workerRef = useRef<ReturnType<typeof createWorkerClient<TracingWorkerInput, TracingWorkerOutput>> | null>(null);
   const [rcaLoading, setRcaLoading] = useState(false);
 
+  // Lazily create the worker on first use so visiting other pages doesn't spawn
+  // an idle Web Worker at startup.
+  const getWorker = useCallback(() => {
+    if (!workerRef.current) {
+      workerRef.current = createWorkerClient<TracingWorkerInput, TracingWorkerOutput>(
+        new Worker(new URL('../../shared/workers/tracing-handler.ts', import.meta.url), { type: 'module' }),
+      );
+    }
+    return workerRef.current;
+  }, []);
+
   useEffect(() => {
-    const worker = new Worker(new URL('../../shared/workers/tracing-handler.ts', import.meta.url), { type: 'module' });
-    workerRef.current = createWorkerClient<TracingWorkerInput, TracingWorkerOutput>(worker);
     return () => {
       workerRef.current?.terminate();
       workerRef.current = null;
@@ -119,8 +129,7 @@ export function AiRcaPage() {
 
   const upload = useUnifiedFileUpload({
     onFile: useCallback(async (content: string) => {
-      const w = workerRef.current;
-      if (!w) return;
+      const w = getWorker();
       setRcaLoading(true);
       try {
         const a = await w.execute({ content, format: 'json' });
@@ -128,10 +137,9 @@ export function AiRcaPage() {
       } finally {
         setRcaLoading(false);
       }
-    }, []),
+    }, [getWorker]),
     onBinaryFile: useCallback(async (buffer: ArrayBuffer) => {
-      const w = workerRef.current;
-      if (!w) return;
+      const w = getWorker();
       setRcaLoading(true);
       try {
         const a = await w.execute({ content: '', format: 'ndv', ndvBuffer: buffer });
@@ -139,7 +147,7 @@ export function AiRcaPage() {
       } finally {
         setRcaLoading(false);
       }
-    }, []),
+    }, [getWorker]),
   });
   const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
 
@@ -161,6 +169,9 @@ export function AiRcaPage() {
 
   async function runDiagnosis(useLocal: boolean) {
     if (!analysis) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setRunning(true);
     setReportError(null);
     setReport('');
@@ -172,15 +183,24 @@ export function AiRcaPage() {
             analysis,
             spans,
             lang,
+            signal: controller.signal,
             onStream: chunk => setReport(prev => prev + chunk),
           });
+      if (controller.signal.aborted) return;
       setReport(result);
     } catch (err) {
+      if (controller.signal.aborted) return;
       setReportError((err as Error).message);
     } finally {
-      setRunning(false);
-      requestAnimationFrame(() => reportRef.current?.scrollTo({ top: reportRef.current.scrollHeight }));
+      if (abortRef.current === controller) {
+        setRunning(false);
+        requestAnimationFrame(() => reportRef.current?.scrollTo({ top: reportRef.current.scrollHeight }));
+      }
     }
+  }
+
+  function handleCancel() {
+    abortRef.current?.abort();
   }
 
   async function handleAiDiagnose() {
@@ -268,6 +288,14 @@ export function AiRcaPage() {
               </svg>
               {running ? t('aiRca.analyzing') : t('aiRca.diagnose')}
             </button>
+            {running && (
+              <button
+                onClick={handleCancel}
+                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                {t('aiRca.cancel')}
+              </button>
+            )}
             {!isRcaConfigured() && (
               <button
                 onClick={() => { setModalSession(s => s + 1); setModalOpen(true); }}

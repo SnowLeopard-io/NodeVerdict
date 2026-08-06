@@ -204,7 +204,7 @@ export function SnapshotHistoryPage() {
     a.href = url;
     a.download = 'snapshot-history.json';
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   return (

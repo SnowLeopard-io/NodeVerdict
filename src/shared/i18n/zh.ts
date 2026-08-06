@@ -236,6 +236,7 @@ const zh: Record<string, string> = {
   'eventViewer.error': '错误',
   'eventViewer.errorRate': '错误率',
   'eventViewer.errors': '错误数',
+  'eventViewer.rowCount': '显示 {count} 条事件',
   'eventViewer.errorsCount': '{count} 个错误',
   'eventViewer.eventDetail': '事件详情',
   'eventViewer.eventTimeline': '事件时间线',

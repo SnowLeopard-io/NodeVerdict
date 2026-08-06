@@ -22,6 +22,11 @@ export const GAP = 2;
 export const SUB_VALUE = 1;
 export const SUB_STRUCTURE = 5;
 
+/** Hard upper bound on the alignment band. Prevents O(n * band) blow-up. */
+export const MAX_ALIGN_BAND = 2048;
+/** Upper bound on DP cells (n * (2*band+1)) to bound memory & CPU. */
+export const MAX_ALIGN_CELLS = 40_000_000;
+
 export function eventDistance(a: NormalizedEvent, b: NormalizedEvent): number {
   if (a.fingerprint === b.fingerprint) return 0;
   if (a.signature === b.signature) return SUB_VALUE;
@@ -250,17 +255,55 @@ export function alignNormalized(
     s++;
   }
 
-  const midN = norm.slice(p, n - s);
-  const midF = fault.slice(p, m - s);
-  if (midN.length > 0 || midF.length > 0) {
-    const midBand = Math.max(band, Math.abs(midN.length - midF.length));
-    const midPairs = bandedAlign(midN, midF, midBand);
+  let midN = norm.slice(p, n - s);
+  let midF = fault.slice(p, m - s);
+
+  const tail: { idx: number; kind: 'delete' | 'insert'; ev: NormalizedEvent }[] = [];
+
+if (midN.length === 0 || midF.length === 0) {
+    // No overlap: the whole middle is pure gaps. Emit every middle event.
+    for (let t = 0; t < midN.length; t++) {
+      pairs.push({ normalIndex: p + t, faultIndex: -1, kind: 'delete', distance: GAP, normal: midN[t].event });
+    }
+    for (let t = 0; t < midF.length; t++) {
+      pairs.push({ normalIndex: -1, faultIndex: p + t, kind: 'insert', distance: GAP, fault: midF[t].event });
+    }
+  } else {
+    // Pick a band that (a) covers the length difference and (b) keeps the DP
+    // table within MAX_ALIGN_CELLS. If the requested band would be too wide,
+    // the longer sequence's excessive tail is emitted as plain gaps instead,
+    // which is exactly what a full banded alignment would produce after the
+    // shared prefix/suffix have already been trimmed.
+    const lenDiff = Math.abs(midN.length - midF.length);
+    const minLen = Math.min(midN.length, midF.length);
+    let effBand = Math.min(Math.max(band, lenDiff), MAX_ALIGN_BAND);
+    effBand = Math.min(effBand, largestFeasibleBand(minLen, effBand));
+
+    // Ensure |midN.length - midF.length| <= effBand by moving overflow to tail.
+    if (midN.length > midF.length + effBand) {
+      const keep = midF.length + effBand;
+      for (let t = keep; t < midN.length; t++) tail.push({ idx: t, kind: 'delete', ev: midN[t] });
+      midN = midN.slice(0, keep);
+    } else if (midF.length > midN.length + effBand) {
+      const keep = midN.length + effBand;
+      for (let t = keep; t < midF.length; t++) tail.push({ idx: t, kind: 'insert', ev: midF[t] });
+      midF = midF.slice(0, keep);
+    }
+
+    const midPairs = bandedAlign(midN, midF, effBand);
     for (const pr of midPairs) {
       pairs.push({
         ...pr,
         normalIndex: pr.normalIndex >= 0 ? pr.normalIndex + p : -1,
         faultIndex: pr.faultIndex >= 0 ? pr.faultIndex + p : -1,
       });
+    }
+    for (const tk of tail) {
+      pairs.push(
+        tk.kind === 'delete'
+          ? { normalIndex: tk.idx + p, faultIndex: -1, kind: 'delete', distance: GAP, normal: tk.ev.event }
+          : { normalIndex: -1, faultIndex: tk.idx + p, kind: 'insert', distance: GAP, fault: tk.ev.event },
+      );
     }
   }
 
@@ -280,4 +323,20 @@ export function alignNormalized(
   const alignment = summarize(pairs, n, m);
   alignment.alignTimeMs = performance.now() - started;
   return alignment;
+}
+
+/**
+ * Largest band in `[1, desired]` such that `(minLen + band) * (2 * band + 1)`
+ * stays within `MAX_ALIGN_CELLS`. At least 1 is returned, so the DP never
+ * blows up even on pathological inputs.
+ */
+function largestFeasibleBand(minLen: number, desired: number): number {
+  let lo = 1;
+  let hi = Math.max(1, desired);
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if ((minLen + mid) * (2 * mid + 1) <= MAX_ALIGN_CELLS) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
 }

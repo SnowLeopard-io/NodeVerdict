@@ -164,6 +164,15 @@ export class IncrementalJsonParser {
 
         case '}':
         case ']': {
+          // A scalar token may be terminated directly by the closing bracket
+          // (e.g. the last element of an array/object). Complete it before
+          // decrementing depth, since a scalar began at container depth.
+          if (this.valueType === 'scalar') {
+            this.queue.push(this.data.slice(this.valueStart, this.i));
+            this.valueType = 'none';
+            this.valueStart = -1;
+            if (this.mode === 'scalar') this.finished = true;
+          }
           this.depth--;
           if (this.depth === this.valueBase && this.valueType !== 'none') {
             this.completeValue();
@@ -192,6 +201,26 @@ export class IncrementalJsonParser {
         default: {
           if (WS.has(ch)) {
             this.i++;
+            continue;
+          }
+          // A scalar token may extend across a chunk boundary. When the
+          // previous chunk ended mid-scalar, `valueType` is already 'scalar':
+          // resume scanning for its terminator instead of skipping these bytes.
+          if (this.valueType === 'scalar') {
+            let end = this.i + 1;
+            while (end < this.data.length && SCALAR_CONT.has(this.data[end])) {
+              end++;
+            }
+            if (end === this.data.length) {
+              // Token still unterminated; wait for the next chunk.
+              this.i = end;
+              return;
+            }
+            this.queue.push(this.data.slice(this.valueStart, end));
+            this.valueType = 'none';
+            this.valueStart = -1;
+            if (this.mode === 'scalar') this.finished = true;
+            this.i = end;
             continue;
           }
           if (this.valueType === 'none' && SCALAR_START.has(ch)) {
