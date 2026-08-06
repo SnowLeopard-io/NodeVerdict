@@ -3,7 +3,7 @@ import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import { FlameGraph } from './components/FlameGraph';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import type { CpuProfileAnalysis } from '../../shared/types';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
@@ -58,33 +58,22 @@ export function CpuProfilerPage() {
       }
     }, [getWorker]),
   });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset } = upload;
+  const { error, handleReset } = upload;
 
   if (!analysis) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('cpuProfiler.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('cpuProfiler.description')}</p>
-        </div>
-        <FileUpload
-          onFile={handleFile}
+        <UploadHeader
+          title={t('cpuProfiler.title')}
+          description={t('cpuProfiler.description')}
+          api={upload}
           accept=".cpuprofile,.json"
           label={t('cpuProfiler.uploadTitle')}
           maxSize={500 * 1024 * 1024}
-          fileName={fileName}
-          fileSize={fileSize}
           onReset={handleReset}
-          loading={loading}
-          progress={progress}
-          onUrlLoad={loadFromUrl}
-          urlLoading={urlLoading}
-          urlError={urlError}
-          urlProgress={urlProgress}
-          onUrlCancel={cancelUrl}
+          error={error}
         />
-        {(error || urlError) && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
-        <LoadingOverlay visible={loading || urlLoading || cpuLoading} message={t('cpuProfiler.loading')} />
+        <LoadingOverlay visible={upload.loading || upload.urlLoading || cpuLoading} message={t('cpuProfiler.loading')} />
         <div className="mt-8">
           <EmptyState
             title={t('cpuProfiler.noData')}
@@ -106,8 +95,7 @@ export function CpuProfilerPage() {
               .replace('{ms}', analysis.totalTime.toFixed(2))}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <ExportButton
+        <ExportButton
             onExportMarkdown={() => toMarkdown({
               title: t('cpuProfiler.exportTitle'),
               sections: [
@@ -140,25 +128,10 @@ export function CpuProfilerPage() {
             })}
             filename="cpu-profile"
           />
-          <div className="w-72">
-            <FileUpload
-              onFile={handleFile}
-              accept=".cpuprofile,.json"
-              label={t('cpuProfiler.uploadTitle')}
-              maxSize={500 * 1024 * 1024}
-              fileName={fileName}
-              fileSize={fileSize}
-              onReset={handleReset}
-              loading={loading}
-              progress={progress}
-              onUrlLoad={loadFromUrl}
-              urlLoading={urlLoading}
-              urlError={urlError}
-              urlProgress={urlProgress}
-              onUrlCancel={cancelUrl}
-            />
-          </div>
-        </div>
+      </div>
+
+      <div className="mb-4">
+        <WideUpload api={upload} accept=".cpuprofile,.json" label={t('cpuProfiler.uploadTitle')} maxSize={500 * 1024 * 1024} onReset={handleReset} error={error} />
       </div>
 
       {/* Stats */}

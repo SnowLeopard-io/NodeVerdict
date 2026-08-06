@@ -7,7 +7,7 @@ import type { TracingWorkerInput, TracingWorkerOutput } from '../../shared/worke
 import { useI18n } from '../../shared/i18n/useI18n';
 import { WaterfallChart } from './components/WaterfallChart';
 import { BottleneckList } from './components/BottleneckList';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import type { TraceViewerData, TracingEvent } from '../../shared/types';
 import { formatDuration } from '../../shared/utils';
 
@@ -79,7 +79,7 @@ export function TraceViewerPage() {
       }
     }, [getWorker, setTraceData, setTraceEvents]),
   });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+  const { error, handleReset: uploadReset } = upload;
 
   function handleReset() {
     uploadReset();
@@ -105,14 +105,17 @@ export function TraceViewerPage() {
   if (!traceData) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('traceViewer.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('traceViewer.uploadHint')}</p>
-        </div>
-        <FileUpload onFile={handleFile} accept=".json,.ndv" label={t('traceViewer.uploadTitle')} maxSize={500 * 1024 * 1024} fileName={fileName} fileSize={fileSize} onReset={handleReset} loading={loading} progress={progress} onUrlLoad={loadFromUrl} urlLoading={urlLoading} urlError={urlError} urlProgress={urlProgress} onUrlCancel={cancelUrl} />
-        {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-        {urlError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{urlError}</p>}
-        <LoadingOverlay visible={loading || urlLoading || traceLoading} message={t('traceViewer.buildingTrace')} />
+        <UploadHeader
+          title={t('traceViewer.title')}
+          description={t('traceViewer.uploadHint')}
+          api={upload}
+          accept=".json,.ndv"
+          label={t('traceViewer.uploadTitle')}
+          maxSize={500 * 1024 * 1024}
+          onReset={handleReset}
+          error={error}
+        />
+        <LoadingOverlay visible={upload.loading || upload.urlLoading || traceLoading} message={t('traceViewer.buildingTrace')} />
         <div className="mt-8">
           <EmptyState
             title={t('traceViewer.noData')}
@@ -125,28 +128,13 @@ export function TraceViewerPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-4 flex items-start justify-between">
+      <div className="mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('traceViewer.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">{t('traceViewer.operationsAndLinks').replace('{operations}', String(traceData.totalOperations)).replace('{links}', String(dependencies.length))}</p>
         </div>
-        <div className="w-72">
-          <FileUpload
-            onFile={handleFile}
-            accept=".json,.ndv"
-            label={t('traceViewer.uploadTitle')}
-            maxSize={500 * 1024 * 1024}
-            fileName={fileName}
-            fileSize={fileSize}
-            onReset={handleReset}
-            loading={loading}
-            progress={progress}
-            onUrlLoad={loadFromUrl}
-            urlLoading={urlLoading}
-            urlError={urlError}
-            urlProgress={urlProgress}
-            onUrlCancel={cancelUrl}
-          />
+        <div className="mt-4">
+          <WideUpload api={upload} accept=".json,.ndv" label={t('traceViewer.uploadTitle')} maxSize={500 * 1024 * 1024} onReset={handleReset} error={error} />
         </div>
       </div>
 
@@ -174,7 +162,7 @@ export function TraceViewerPage() {
         </div>
       </div>
 
-      <LoadingOverlay visible={loading || traceLoading} />
+      <LoadingOverlay visible={upload.loading || traceLoading} />
     </div>
   );
 }

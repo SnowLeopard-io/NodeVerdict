@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import { diffCpuProfiles, summarizeCpuDiff } from '../../shared/engine/cpu-profile-diff';
-import { FileUpload, EmptyState, StatCard } from '../../shared/components';
+import { PageHeader, WideUpload, EmptyState, StatCard } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import type { CpuProfileAnalysis, CpuProfileDiff } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
@@ -24,7 +24,6 @@ export function CpuProfileDiffPage() {
   const { t } = useI18n();
   const [before, setBefore] = useState<SideProfile | null>(null);
   const [after, setAfter] = useState<SideProfile | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const workerRef = useRef<ReturnType<typeof createWorkerClient<string, CpuProfileAnalysis>> | null>(null);
   const getWorker = useCallback(() => {
@@ -39,14 +38,9 @@ export function CpuProfileDiffPage() {
 
   const makeUpload = (side: 'before' | 'after') => useUnifiedFileUpload({
     onFile: (async (content: string) => {
-      setLoading(true);
-      try {
-        const analysis = await getWorker().execute(content);
-        if (side === 'before') setBefore({ analysis, name: `${side}.cpuprofile` });
-        else setAfter({ analysis, name: `${side}.cpuprofile` });
-      } finally {
-        setLoading(false);
-      }
+      const analysis = await getWorker().execute(content);
+      if (side === 'before') setBefore({ analysis, name: `${side}.cpuprofile` });
+      else setAfter({ analysis, name: `${side}.cpuprofile` });
     }),
   });
 
@@ -63,50 +57,15 @@ export function CpuProfileDiffPage() {
   if (!before || !after) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('cpuDiff.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('cpuDiff.description')}</p>
-        </div>
+        <PageHeader title={t('cpuDiff.title')} description={t('cpuDiff.description')} />
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
             <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">{t('cpuDiff.before')}</p>
-            <FileUpload
-              onFile={uploadBefore.handleFile}
-              accept=".cpuprofile,.json"
-              label={t('cpuProfiler.uploadTitle')}
-              maxSize={500 * 1024 * 1024}
-              fileName={uploadBefore.fileName}
-              fileSize={uploadBefore.fileSize}
-              onReset={uploadBefore.handleReset}
-              loading={loading}
-              progress={uploadBefore.progress}
-              onUrlLoad={uploadBefore.loadFromUrl}
-              urlLoading={uploadBefore.urlLoading}
-              urlError={uploadBefore.urlError}
-              urlProgress={uploadBefore.urlProgress}
-              onUrlCancel={uploadBefore.cancelUrl}
-            />
-            {uploadBefore.error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{uploadBefore.error}</p>}
+            <WideUpload api={uploadBefore} accept=".cpuprofile,.json" label={t('cpuProfiler.uploadTitle')} />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">{t('cpuDiff.after')}</p>
-            <FileUpload
-              onFile={uploadAfter.handleFile}
-              accept=".cpuprofile,.json"
-              label={t('cpuProfiler.uploadTitle')}
-              maxSize={500 * 1024 * 1024}
-              fileName={uploadAfter.fileName}
-              fileSize={uploadAfter.fileSize}
-              onReset={uploadAfter.handleReset}
-              loading={loading}
-              progress={uploadAfter.progress}
-              onUrlLoad={uploadAfter.loadFromUrl}
-              urlLoading={uploadAfter.urlLoading}
-              urlError={uploadAfter.urlError}
-              urlProgress={uploadAfter.urlProgress}
-              onUrlCancel={uploadAfter.cancelUrl}
-            />
-            {uploadAfter.error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{uploadAfter.error}</p>}
+            <WideUpload api={uploadAfter} accept=".cpuprofile,.json" label={t('cpuProfiler.uploadTitle')} />
           </div>
         </div>
       </div>

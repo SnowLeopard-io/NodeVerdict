@@ -6,59 +6,39 @@ import { loadTracingData } from '../../shared/engine';
 import { measureTrace, buildBaselineReport, formatBaselineReport } from '../../shared/gate/baseline';
 import { evaluateGate, computeGateMetrics, defaultGateConfig } from '../../shared/gate/performance-gate';
 import type { TracingEvent } from '../../shared/types';
-import { FileUpload, EmptyState, StatCard } from '../../shared/components';
+import { EmptyState, StatCard, UploadHeader } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import { useI18n } from '../../shared/i18n/useI18n';
 
 export function CiBaselinePage() {
   const { t } = useI18n();
   const [events, setEvents] = useState<TracingEvent[] | null>(null);
-  const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState('');
 
   const upload = useUnifiedFileUpload({
     onFile: useCallback(async (content: string) => {
-      setLoading(true);
-      try {
-        setEvents(loadTracingData(content));
-        setFileName('trace');
-      } finally {
-        setLoading(false);
-      }
+      setEvents(loadTracingData(content));
+      setFileName('trace');
     }, []),
   });
-  const { handleFile, fileSize, handleReset, progress, error, loadFromUrl, urlLoading, urlError, urlProgress, cancelUrl } = upload;
+  const { handleReset, error } = upload;
 
   const report = useMemo(() => (events ? buildBaselineReport(events, fileName || 'ci-trace') : null), [events, fileName]);
   const gate = useMemo(() => (events ? evaluateGate(computeGateMetrics(events)) : null), [events]);
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('ciBaseline.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('ciBaseline.description')}</p>
-        </div>
-        <div className="w-full max-w-2xl">
-          <FileUpload
-            onFile={handleFile}
-            accept=".json,.ndv"
-            label={t('ciBaseline.uploadLabel')}
-            maxSize={500 * 1024 * 1024}
-            fileName={fileName || upload.fileName}
-            fileSize={fileSize}
-            onReset={() => { handleReset(); setEvents(null); }}
-            loading={loading || upload.loading}
-            progress={progress}
-            onUrlLoad={loadFromUrl}
-            urlLoading={urlLoading}
-            urlError={urlError}
-            urlProgress={urlProgress}
-            onUrlCancel={cancelUrl}
-          />
-          {(error || urlError) && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
-        </div>
-      </div>
+      <UploadHeader
+        title={t('ciBaseline.title')}
+        description={t('ciBaseline.description')}
+        api={upload}
+        accept=".json,.ndv"
+        label={t('ciBaseline.uploadLabel')}
+        maxSize={500 * 1024 * 1024}
+        fileNameOverride={fileName || upload.fileName}
+        onReset={() => { handleReset(); setEvents(null); }}
+        error={error}
+      />
 
       {!events ? (
         <div className="mt-8"><EmptyState title={t('ciBaseline.noData')} description={t('ciBaseline.noDataDesc')} /></div>

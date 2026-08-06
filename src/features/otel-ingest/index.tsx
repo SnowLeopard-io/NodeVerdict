@@ -3,7 +3,7 @@ import { createEmptyPipelineState, ingestOtelBatch, summarizePipelineHealth } fr
 import { defaultAlertRules } from '../../shared/engine/alert-engine';
 import type { OtelPipelineState } from '../../shared/engine/otel-pipeline';
 import type { AlertRule } from '../../shared/types/alert';
-import { EmptyState, StatCard, FileUpload } from '../../shared/components';
+import { EmptyState, StatCard, PageHeader, WideUpload } from '../../shared/components';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { useI18n } from '../../shared/i18n/useI18n';
 
@@ -40,10 +40,7 @@ export function OtelIngestPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('otelIngest.title')}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('otelIngest.description')}</p>
-      </div>
+      <PageHeader title={t('otelIngest.title')} description={t('otelIngest.description')} />
 
       <div className="grid grid-cols-4 gap-3 mb-4">
         <StatCard title={t('otelIngest.events')} value={state.totalEvents.toString()} />
@@ -52,7 +49,7 @@ export function OtelIngestPage() {
         <StatCard title={t('otelIngest.alerts')} value={lastFired.length.toString()} color={lastFired.length ? 'text-red-600 dark:text-red-400' : undefined} />
       </div>
 
-      <FileUpload onFile={upload.handleFile} accept=".json" label={t('otelIngest.uploadLabel')} maxSize={50 * 1024 * 1024} fileName={upload.fileName} fileSize={upload.fileSize} onReset={upload.handleReset} loading={upload.loading} progress={upload.progress} onUrlLoad={upload.loadFromUrl} urlLoading={upload.urlLoading} urlError={upload.urlError} urlProgress={upload.urlProgress} onUrlCancel={upload.cancelUrl} />
+      <WideUpload api={upload} accept=".json" label={t('otelIngest.uploadLabel')} maxSize={50 * 1024 * 1024} />
 
       <div className="mt-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">

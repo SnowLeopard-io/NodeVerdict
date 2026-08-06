@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { diffHeapSnapshots } from '../../shared/engine';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { PageHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { formatBytes } from '../../shared/utils';
 import type { HeapSnapshot, HeapAnalysis } from '../../shared/types';
 import type { HeapDiffResult } from '../../shared/engine';
@@ -86,10 +86,10 @@ export function HeapDiffPage() {
     }, [snapshotA, t, parseInWorker]),
   });
 
-  const { loading: loadingA, error: errorA, fileName: fileNameA, fileSize: fileSizeA, handleFile: handleFileA, progress: progressA, urlLoading: urlLoadingA, urlError: urlErrorA, urlProgress: urlProgressA, loadFromUrl: loadFromUrlA, cancelUrl: cancelUrlA, handleReset: resetA } = uploadA;
-  const { loading: loadingB, error: errorB, fileName: fileNameB, fileSize: fileSizeB, handleFile: handleFileB, progress: progressB, urlLoading: urlLoadingB, urlError: urlErrorB, urlProgress: urlProgressB, loadFromUrl: loadFromUrlB, cancelUrl: cancelUrlB, handleReset: resetB } = uploadB;
+  const { error: errorA, handleReset: resetA } = uploadA;
+  const { error: errorB, handleReset: resetB } = uploadB;
 
-  const loading = loadingA || loadingB || heapLoading;
+  const loading = uploadA.loading || uploadB.loading || heapLoading;
 
   function handleReset() {
     resetA();
@@ -126,53 +126,20 @@ export function HeapDiffPage() {
   if (!diffResult) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('heapDiff.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('heapDiff.description')}</p>
-        </div>
+        <PageHeader title={t('heapDiff.title')} description={t('heapDiff.description')} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('heapDiff.uploadBefore')}</p>
-            <FileUpload
-              onFile={handleFileA}
-              accept=".heapsnapshot,.json"
-              label={t('heapDiff.uploadBefore')}
-              maxSize={3 * 1024 * 1024 * 1024}
-              fileName={fileNameA}
-              fileSize={fileSizeA}
-              onReset={resetA}
-              loading={loadingA}
-              progress={progressA}
-              onUrlLoad={loadFromUrlA}
-              urlLoading={urlLoadingA}
-              urlError={urlErrorA}
-              urlProgress={urlProgressA}
-              onUrlCancel={cancelUrlA}
-            />
+            <WideUpload api={uploadA} accept=".heapsnapshot,.json" label={t('heapDiff.uploadBefore')} maxSize={3 * 1024 * 1024 * 1024} />
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('heapDiff.uploadAfter')}</p>
-            <FileUpload
-              onFile={handleFileB}
-              accept=".heapsnapshot,.json"
-              label={t('heapDiff.uploadAfter')}
-              maxSize={3 * 1024 * 1024 * 1024}
-              fileName={fileNameB}
-              fileSize={fileSizeB}
-              onReset={resetB}
-              loading={loadingB}
-              progress={progressB}
-              onUrlLoad={loadFromUrlB}
-              urlLoading={urlLoadingB}
-              urlError={urlErrorB}
-              urlProgress={urlProgressB}
-              onUrlCancel={cancelUrlB}
-            />
+            <WideUpload api={uploadB} accept=".heapsnapshot,.json" label={t('heapDiff.uploadAfter')} maxSize={3 * 1024 * 1024 * 1024} />
           </div>
         </div>
 
-        {(error || errorA || errorB || urlErrorA || urlErrorB) && <p className="text-sm text-red-600 dark:text-red-400">{error ?? errorA ?? errorB ?? urlErrorA ?? urlErrorB}</p>}
+        {(error || errorA || errorB || uploadA.urlError || uploadB.urlError) && <p className="text-sm text-red-600 dark:text-red-400">{error ?? errorA ?? errorB ?? uploadA.urlError ?? uploadB.urlError}</p>}
         <LoadingOverlay visible={loading} message={t('heapDiff.loading')} />
 
         <div className="mt-8">

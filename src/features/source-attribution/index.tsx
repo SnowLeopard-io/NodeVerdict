@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import { attributeSpans } from '../../shared/source/source-attribution';
-import { FileUpload, EmptyState, StatCard } from '../../shared/components';
+import { EmptyState, StatCard, UploadHeader } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import type { TraceViewerData, TraceSpan } from '../../shared/types';
 import type { TracingWorkerInput, TracingWorkerOutput } from '../../shared/workers/tracing-handler';
@@ -29,7 +29,7 @@ export function SourceAttributionPage() {
       }
     }, [getWorker]),
   });
-  const { handleFile, fileName, fileSize, handleReset, progress, loading: uploadLoading, error, loadFromUrl, urlLoading, urlError, urlProgress, cancelUrl } = upload;
+  const { handleReset, error } = upload;
 
   const attribution = useMemo(() => (spans.length ? attributeSpans(spans) : null), [spans]);
   const rows = attribution?.sites ?? [];
@@ -37,31 +37,16 @@ export function SourceAttributionPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('sourceAttr.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('sourceAttr.description')}</p>
-        </div>
-        <div className="w-full max-w-2xl">
-          <FileUpload
-            onFile={handleFile}
-            accept=".json,.ndv"
-            label={t('sourceAttr.uploadLabel')}
-            maxSize={500 * 1024 * 1024}
-            fileName={fileName}
-            fileSize={fileSize}
-            onReset={() => { handleReset(); setSpans([]); setLoaded(false); }}
-            loading={loading || uploadLoading}
-            progress={progress}
-            onUrlLoad={loadFromUrl}
-            urlLoading={urlLoading}
-            urlError={urlError}
-            urlProgress={urlProgress}
-            onUrlCancel={cancelUrl}
-          />
-          {(error || urlError) && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
-        </div>
-      </div>
+      <UploadHeader
+        title={t('sourceAttr.title')}
+        description={t('sourceAttr.description')}
+        api={upload}
+        accept=".json,.ndv"
+        label={t('sourceAttr.uploadLabel')}
+        maxSize={500 * 1024 * 1024}
+        onReset={() => { handleReset(); setSpans([]); setLoaded(false); }}
+        error={error}
+      />
 
       {!loaded ? (
         <div className="mt-8">

@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { parseMemoryTimeline, calculateGrowthRate } from '../../shared/engine';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { formatBytes, formatDuration } from '../../shared/utils';
 import type { MemoryTimeline, MemoryGrowthRate } from '../../shared/types';
 import * as d3 from 'd3';
@@ -172,7 +172,7 @@ export function MemoryTimelinePage() {
       setGrowthRate(rate);
     }, []),
   });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+  const { error, handleReset: uploadReset } = upload;
 
   // Wrap the error with a more helpful message
   const displayError = error?.includes('JSON')
@@ -188,30 +188,17 @@ export function MemoryTimelinePage() {
   if (!memoryTimeline) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('memoryTimeline.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {t('memoryTimeline.description')}
-          </p>
-        </div>
-        <FileUpload
-          onFile={handleFile}
+        <UploadHeader
+          title={t('memoryTimeline.title')}
+          description={t('memoryTimeline.description')}
+          api={upload}
           accept=".json"
           label={t('memoryTimeline.uploadHint')}
           maxSize={3 * 1024 * 1024 * 1024}
-          fileName={fileName}
-          fileSize={fileSize}
           onReset={handleReset}
-          loading={loading}
-          progress={progress}
-          onUrlLoad={loadFromUrl}
-          urlLoading={urlLoading}
-          urlError={urlError}
-          urlProgress={urlProgress}
-          onUrlCancel={cancelUrl}
+          error={displayError}
         />
-        {(error || urlError) && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
-        <LoadingOverlay visible={loading || urlLoading} message={t('memoryTimeline.loading')} />
+        <LoadingOverlay visible={upload.loading || upload.urlLoading} message={t('memoryTimeline.loading')} />
         <div className="mt-8">
           <EmptyState
             title={t('memoryTimeline.noData')}
@@ -233,8 +220,7 @@ export function MemoryTimelinePage() {
             {t('memoryTimeline.snapshotsCount').replace('{count}', snapshots.length.toLocaleString()).replace('{duration}', formatDuration(durationMs))}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <ExportButton
+        <ExportButton
             onExportMarkdown={() => toMarkdown({
               title: t('memoryTimeline.exportTitle'),
               sections: [
@@ -278,25 +264,10 @@ export function MemoryTimelinePage() {
             })}
             filename="memory-timeline"
           />
-          <div className="w-72">
-            <FileUpload
-              onFile={handleFile}
-              accept=".json"
-              label={t('memoryTimeline.uploadHint')}
-              maxSize={3 * 1024 * 1024 * 1024}
-              fileName={fileName}
-              fileSize={fileSize}
-              onReset={handleReset}
-              loading={loading}
-              progress={progress}
-              onUrlLoad={loadFromUrl}
-              urlLoading={urlLoading}
-              urlError={urlError}
-              urlProgress={urlProgress}
-              onUrlCancel={cancelUrl}
-            />
-          </div>
-        </div>
+      </div>
+
+      <div className="mb-4">
+        <WideUpload api={upload} accept=".json" label={t('memoryTimeline.uploadHint')} maxSize={3 * 1024 * 1024 * 1024} onReset={handleReset} error={displayError} />
       </div>
 
       {/* Stat Cards */}

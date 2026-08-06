@@ -7,10 +7,7 @@ import { useI18n } from '../../shared/i18n/useI18n';
 import { EventTimeline } from './components/EventTimeline';
 import { EventDetail } from './components/EventDetail';
 import { EventSummary } from './components/EventSummary';
-import { ChannelFilter } from '../../shared/components';
-import { FileUpload } from '../../shared/components';
-import { EmptyState } from '../../shared/components';
-import { LoadingOverlay } from '../../shared/components';
+import { ChannelFilter, UploadHeader, WideUpload, LoadingOverlay, EmptyState } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
 
@@ -35,7 +32,7 @@ export function EventViewerPage() {
    }, [setTracingAnalysis, setSelectedChannels, setSelectedEventIndex]);
 
    const upload = useUnifiedFileUpload({ onAnalysis: handleAnalysis });
-   const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+   const { error, handleReset: uploadReset } = upload;
 
    function handleReset() {
      uploadReset();
@@ -59,29 +56,17 @@ export function EventViewerPage() {
   if (!tracingAnalysis) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('eventViewer.uploadTitle')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('eventViewer.uploadHint')}</p>
-        </div>
-        <FileUpload
-          onFile={handleFile}
+        <UploadHeader
+          title={t('eventViewer.uploadTitle')}
+          description={t('eventViewer.uploadHint')}
+          api={upload}
           accept=".json"
           label={t('eventViewer.uploadTitle')}
           maxSize={500 * 1024 * 1024}
-          fileName={fileName}
-          fileSize={fileSize}
           onReset={handleReset}
-          loading={loading}
-          progress={progress}
-          onUrlLoad={loadFromUrl}
-          urlLoading={urlLoading}
-          urlError={urlError}
-          urlProgress={urlProgress}
-          onUrlCancel={cancelUrl}
+          error={error}
         />
-        {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-        {urlError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{urlError}</p>}
-        <LoadingOverlay visible={loading || urlLoading} message={t('eventViewer.parsingEvents')} />
+        <LoadingOverlay visible={upload.loading || upload.urlLoading} message={t('eventViewer.parsingEvents')} />
         <div className="mt-8">
           <EmptyState
             title={t('eventViewer.noEvents')}
@@ -94,13 +79,13 @@ export function EventViewerPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-4 flex items-start justify-between">
+      <div className="mb-4">
+        <div className="flex items-start justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('eventViewer.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">{t('eventViewer.eventsAndOps').replace('{events}', String(tracingAnalysis.totalEvents)).replace('{operations}', String(tracingAnalysis.totalOperations))}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <ExportButton
+        <ExportButton
             onExportMarkdown={() => toMarkdown({
               title: t('eventViewer.exportTitle'),
               sections: [
@@ -132,25 +117,11 @@ export function EventViewerPage() {
             })}
             filename="event-viewer"
           />
-          <div className="w-72">
-            <FileUpload
-              onFile={handleFile}
-              accept=".json"
-              label={t('eventViewer.uploadTitle')}
-              maxSize={500 * 1024 * 1024}
-              fileName={fileName}
-              fileSize={fileSize}
-              onReset={handleReset}
-              loading={loading}
-              progress={progress}
-              onUrlLoad={loadFromUrl}
-              urlLoading={urlLoading}
-              urlError={urlError}
-              urlProgress={urlProgress}
-              onUrlCancel={cancelUrl}
-            />
-          </div>
         </div>
+      </div>
+
+      <div className="mb-4">
+        <WideUpload api={upload} accept=".json" label={t('eventViewer.uploadTitle')} maxSize={500 * 1024 * 1024} onReset={handleReset} error={error} />
       </div>
 
       <EventSummary analysis={tracingAnalysis} />
@@ -188,7 +159,7 @@ export function EventViewerPage() {
         </div>
       </div>
 
-      <LoadingOverlay visible={loading || urlLoading} message={t('eventViewer.parsingEvents')} />
+      <LoadingOverlay visible={upload.loading || upload.urlLoading} message={t('eventViewer.parsingEvents')} />
     </div>
   );
 }

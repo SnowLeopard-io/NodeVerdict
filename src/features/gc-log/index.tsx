@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { parseGcLog } from '../../shared/engine';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { formatDuration } from '../../shared/utils';
 import type { GCLogAnalysis } from '../../shared/types';
 import { ExportButton } from '../report/ExportButton';
@@ -37,7 +37,7 @@ export function GcLogPage() {
       }
     }, [t]),
   });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+  const { error, handleReset: uploadReset } = upload;
 
   const displayError = parseError || error;
 
@@ -50,30 +50,17 @@ export function GcLogPage() {
   if (!gcLog) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('gcLog.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {t('gcLog.description')}
-          </p>
-        </div>
-        <FileUpload
-          onFile={handleFile}
+        <UploadHeader
+          title={t('gcLog.title')}
+          description={t('gcLog.description')}
+          api={upload}
           accept=".txt,.log,.gc.log"
           label={t('gcLog.uploadTitle')}
           maxSize={3 * 1024 * 1024 * 1024}
-          fileName={fileName}
-          fileSize={fileSize}
           onReset={handleReset}
-          loading={loading}
-          progress={progress}
-          onUrlLoad={loadFromUrl}
-          urlLoading={urlLoading}
-          urlError={urlError}
-          urlProgress={urlProgress}
-          onUrlCancel={cancelUrl}
+          error={displayError}
         />
-        {(error || urlError) && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
-        <LoadingOverlay visible={loading || urlLoading} message={t('gcLog.loading')} />
+        <LoadingOverlay visible={upload.loading || upload.urlLoading} message={t('gcLog.loading')} />
         <div className="mt-8">
           <EmptyState
             title={t('gcLog.noData')}
@@ -93,8 +80,7 @@ export function GcLogPage() {
             {t('gcLog.eventsCount').replace('{count}', gcLog.totalGcs.toLocaleString()).replace('{totalPause}', gcLog.totalPauseMs.toFixed(1))}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <ExportButton
+        <ExportButton
             onExportMarkdown={() => toMarkdown({
               title: t('gcLog.exportTitle'),
               sections: [
@@ -139,25 +125,10 @@ export function GcLogPage() {
             })}
             filename="gc-log"
           />
-          <div className="w-72">
-            <FileUpload
-              onFile={handleFile}
-              accept=".txt,.log,.gc.log"
-              label={t('gcLog.uploadTitle')}
-              maxSize={3 * 1024 * 1024 * 1024}
-              fileName={fileName}
-              fileSize={fileSize}
-              onReset={handleReset}
-              loading={loading}
-              progress={progress}
-              onUrlLoad={loadFromUrl}
-              urlLoading={urlLoading}
-              urlError={urlError}
-              urlProgress={urlProgress}
-              onUrlCancel={cancelUrl}
-            />
-          </div>
-        </div>
+      </div>
+
+      <div className="mb-4">
+        <WideUpload api={upload} accept=".txt,.log,.gc.log" label={t('gcLog.uploadTitle')} maxSize={3 * 1024 * 1024 * 1024} onReset={handleReset} error={displayError} />
       </div>
 
       {/* Stat cards: Total GCs, Major GCs, Minor GCs, Total Pause Time */}
@@ -250,7 +221,7 @@ export function GcLogPage() {
         </div>
       </div>
 
-      <LoadingOverlay visible={loading} />
+      <LoadingOverlay visible={upload.loading || upload.urlLoading} />
     </div>
   );
 }

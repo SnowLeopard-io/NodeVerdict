@@ -4,7 +4,7 @@ import { analyzeStrings, analyzeExternalMemory, calculateGrowthRate } from '../.
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import type { StringAnalysis, MemoryGrowthRate, HeapAnalysis } from '../../shared/types';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { formatBytes } from '../../shared/utils';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
@@ -62,7 +62,7 @@ export function HeapAnalyzerPage() {
       }
     }, [getHeapWorker, setHeapAnalysis, setStringAnalysis, setExternalMemory]),
   });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+  const { error, handleReset: uploadReset } = upload;
 
   function handleReset() {
     uploadReset();
@@ -79,29 +79,17 @@ export function HeapAnalyzerPage() {
   if (!heapAnalysis) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('heapAnalyzer.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('heapAnalyzer.description')}</p>
-        </div>
-        <FileUpload
-          onFile={handleFile}
+        <UploadHeader
+          title={t('heapAnalyzer.title')}
+          description={t('heapAnalyzer.description')}
+          api={upload}
           accept=".heapsnapshot,.json"
           label={t('heapAnalyzer.uploadTitle')}
           maxSize={3 * 1024 * 1024 * 1024}
-          fileName={fileName}
-          fileSize={fileSize}
           onReset={handleReset}
-          loading={loading}
-          progress={progress}
-          onUrlLoad={loadFromUrl}
-          urlLoading={urlLoading}
-          urlError={urlError}
-          urlProgress={urlProgress}
-          onUrlCancel={cancelUrl}
+          error={displayError}
         />
-        {displayError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{displayError}</p>}
-        {(error || urlError) && !displayError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{urlError}</p>}
-        <LoadingOverlay visible={loading || urlLoading || heapLoading} message={t('heapAnalyzer.loading')} />
+        <LoadingOverlay visible={upload.loading || upload.urlLoading || heapLoading} message={t('heapAnalyzer.loading')} />
         <div className="mt-8">
           <EmptyState
             title={t('heapAnalyzer.noData')}
@@ -123,8 +111,7 @@ export function HeapAnalyzerPage() {
               .replace('{edges}', heapAnalysis.snapshot.edgeCount.toLocaleString())}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <ExportButton
+        <ExportButton
             onExportMarkdown={() => toMarkdown({
               title: t('heapAnalyzer.exportTitle'),
               sections: [
@@ -182,25 +169,10 @@ export function HeapAnalyzerPage() {
             })}
             filename="heap-analysis"
           />
-          <div className="w-72">
-            <FileUpload
-              onFile={handleFile}
-              accept=".heapsnapshot,.json"
-              label={t('heapAnalyzer.uploadTitle')}
-              maxSize={3 * 1024 * 1024 * 1024}
-              fileName={fileName}
-              fileSize={fileSize}
-              onReset={handleReset}
-              loading={loading}
-              progress={progress}
-              onUrlLoad={loadFromUrl}
-              urlLoading={urlLoading}
-              urlError={urlError}
-              urlProgress={urlProgress}
-              onUrlCancel={cancelUrl}
-            />
-          </div>
-        </div>
+      </div>
+
+      <div className="mb-4">
+        <WideUpload api={upload} accept=".heapsnapshot,.json" label={t('heapAnalyzer.uploadTitle')} maxSize={3 * 1024 * 1024 * 1024} onReset={handleReset} error={displayError} />
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-4">
@@ -349,7 +321,7 @@ export function HeapAnalyzerPage() {
         </div>
       </div>
 
-      <LoadingOverlay visible={loading || heapLoading} />
+      <LoadingOverlay visible={upload.loading || heapLoading} />
     </div>
   );
 }

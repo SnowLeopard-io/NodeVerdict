@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { analyzeDifferential } from '../../shared/differential';
 import type { DifferentialAnalysis, DivergencePoint, ValueDiff } from '../../shared/differential';
 import { useUnifiedFileUpload } from '../../shared/hooks';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { PageHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
 import type { TracingEvent } from '../../shared/types';
@@ -34,11 +34,8 @@ export function DifferentialDebugPage() {
     }, []),
   });
 
-  const { loading: normalLoading, error: normalError, fileName: normalFileName, fileSize: normalFileSize, handleFile: normalHandleFile, progress: normalProgress, urlLoading: normalUrlLoading, urlError: normalUrlError, urlProgress: normalUrlProgress, loadFromUrl: normalLoadFromUrl, cancelUrl: normalCancelUrl } = normalUpload;
-  const { loading: faultLoading, error: faultError, fileName: faultFileName, fileSize: faultFileSize, handleFile: faultHandleFile, progress: faultProgress, urlLoading: faultUrlLoading, urlError: faultUrlError, urlProgress: faultUrlProgress, loadFromUrl: faultLoadFromUrl, cancelUrl: faultCancelUrl } = faultUpload;
-
-  const loading = normalLoading || faultLoading;
-  const error = normalError || faultError;
+  const error = normalUpload.error || faultUpload.error;
+  const loading = normalUpload.loading || faultUpload.loading;
 
   function handleReset() {
     normalUpload.handleReset();
@@ -72,23 +69,20 @@ export function DifferentialDebugPage() {
   if (!normal || !fault) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('diffDebug.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('diffDebug.description')}</p>
-        </div>
+        <PageHeader title={t('diffDebug.title')} description={t('diffDebug.description')} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('diffDebug.normalRun')}</p>
-            <FileUpload onFile={normalHandleFile} accept=".json" label={t('diffDebug.uploadNormal')} maxSize={500 * 1024 * 1024} fileName={normalFileName} fileSize={normalFileSize} onReset={() => { setNormal(null); }} loading={normalLoading} progress={normalProgress} onUrlLoad={normalLoadFromUrl} urlLoading={normalUrlLoading} urlError={normalUrlError} urlProgress={normalUrlProgress} onUrlCancel={normalCancelUrl} />
+            <WideUpload api={normalUpload} accept=".json" label={t('diffDebug.uploadNormal')} maxSize={500 * 1024 * 1024} onReset={() => setNormal(null)} />
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('diffDebug.faultRun')}</p>
-            <FileUpload onFile={faultHandleFile} accept=".json" label={t('diffDebug.uploadFault')} maxSize={500 * 1024 * 1024} fileName={faultFileName} fileSize={faultFileSize} onReset={() => { setFault(null); }} loading={faultLoading} progress={faultProgress} onUrlLoad={faultLoadFromUrl} urlLoading={faultUrlLoading} urlError={faultUrlError} urlProgress={faultUrlProgress} onUrlCancel={faultCancelUrl} />
+            <WideUpload api={faultUpload} accept=".json" label={t('diffDebug.uploadFault')} maxSize={500 * 1024 * 1024} onReset={() => setFault(null)} />
           </div>
         </div>
 
-        {(error || normalUrlError || faultUrlError) && <p className="text-sm text-red-600 dark:text-red-400">{error ?? normalUrlError ?? faultUrlError}</p>}
+        {(error || normalUpload.urlError || faultUpload.urlError) && <p className="text-sm text-red-600 dark:text-red-400">{error ?? normalUpload.urlError ?? faultUpload.urlError}</p>}
         <LoadingOverlay visible={loading} message={t('diffDebug.loading')} />
 
         <div className="mt-8">

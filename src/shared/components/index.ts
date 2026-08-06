@@ -5,3 +5,5 @@ export { EmptyState } from './EmptyState';
 export { LoadingOverlay } from './LoadingOverlay';
 export { ErrorBoundary } from './ErrorBoundary';
 export { LangSwitch } from './LangSwitch';
+export { PageHeader, WideUpload, UploadHeader } from './UploadSection';
+export type { UploadApi } from './UploadSection';

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { validateEvents } from '../../shared/engine';
-import { FileUpload, EmptyState, LoadingOverlay, StatCard } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, LoadingOverlay, StatCard } from '../../shared/components';
 import type { TracingEvent } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
 
@@ -25,7 +25,7 @@ export function ValidatorPage() {
       setValidationResults(results);
     }, [setValidationResults]),
   });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset } = upload;
+  const { error, handleReset } = upload;
 
   const stats = useMemo(() => {
     if (!validationResults) return null;
@@ -43,13 +43,17 @@ export function ValidatorPage() {
   if (!validationResults) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('validator.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('validator.uploadHint')}</p>
-        </div>
-        <FileUpload onFile={handleFile} accept=".json" label={t('validator.uploadTitle')} maxSize={500 * 1024 * 1024} fileName={fileName} fileSize={fileSize} onReset={handleReset} loading={loading} progress={progress} />
-        {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-        <LoadingOverlay visible={loading} message={t('validator.validating')} />
+        <UploadHeader
+          title={t('validator.title')}
+          description={t('validator.uploadHint')}
+          api={upload}
+          accept=".json"
+          label={t('validator.uploadTitle')}
+          maxSize={500 * 1024 * 1024}
+          onReset={handleReset}
+          error={error}
+        />
+        <LoadingOverlay visible={upload.loading} message={t('validator.validating')} />
         <div className="mt-8">
           <EmptyState
             title={t('validator.noData')}
@@ -62,22 +66,12 @@ export function ValidatorPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-4 flex items-start justify-between">
+      <div className="mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('validator.validationResults')}</h1>
         </div>
-        <div className="w-72">
-          <FileUpload
-            onFile={handleFile}
-            accept=".json"
-            label={t('validator.uploadTitle')}
-            maxSize={500 * 1024 * 1024}
-            fileName={fileName}
-            fileSize={fileSize}
-            onReset={handleReset}
-            loading={loading}
-            progress={progress}
-          />
+        <div className="mt-4">
+          <WideUpload api={upload} accept=".json" label={t('validator.uploadTitle')} maxSize={500 * 1024 * 1024} onReset={handleReset} error={error} />
         </div>
       </div>
 
@@ -124,7 +118,7 @@ export function ValidatorPage() {
         ))}
       </div>
 
-      <LoadingOverlay visible={loading} />
+      <LoadingOverlay visible={upload.loading} />
     </div>
   );
 }

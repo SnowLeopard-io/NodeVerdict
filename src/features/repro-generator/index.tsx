@@ -3,7 +3,7 @@ import { useUnifiedFileUpload } from '../../shared/hooks';
 import { loadTracingData } from '../../shared/engine';
 import { buildReproScript } from '../../shared/engine/repro-extractor';
 import type { TracingEvent } from '../../shared/types';
-import { FileUpload, EmptyState, StatCard } from '../../shared/components';
+import { EmptyState, StatCard, UploadHeader } from '../../shared/components';
 import { useI18n } from '../../shared/i18n/useI18n';
 
 export function ReproGeneratorPage() {
@@ -15,7 +15,7 @@ export function ReproGeneratorPage() {
   const upload = useUnifiedFileUpload({
     onFile: useCallback(async (content: string) => setEvents(loadTracingData(content)), []),
   });
-  const { handleFile, fileName, fileSize, handleReset, progress, loading, error, loadFromUrl, urlLoading, urlError, urlProgress, cancelUrl } = upload;
+  const { handleReset, error } = upload;
 
   const script = useMemo(() => (events ? buildReproScript(events, { maxEvents }) : ''), [events, maxEvents]);
 
@@ -44,31 +44,16 @@ export function ReproGeneratorPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('repro.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('repro.description')}</p>
-        </div>
-        <div className="w-full max-w-2xl">
-          <FileUpload
-            onFile={handleFile}
-            accept=".json,.ndv"
-            label={t('repro.uploadLabel')}
-            maxSize={500 * 1024 * 1024}
-            fileName={fileName}
-            fileSize={fileSize}
-            onReset={() => { handleReset(); setEvents(null); }}
-            loading={loading}
-            progress={progress}
-            onUrlLoad={loadFromUrl}
-            urlLoading={urlLoading}
-            urlError={urlError}
-            urlProgress={urlProgress}
-            onUrlCancel={cancelUrl}
-          />
-          {(error || urlError) && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
-        </div>
-      </div>
+      <UploadHeader
+        title={t('repro.title')}
+        description={t('repro.description')}
+        api={upload}
+        accept=".json,.ndv"
+        label={t('repro.uploadLabel')}
+        maxSize={500 * 1024 * 1024}
+        onReset={() => { handleReset(); setEvents(null); }}
+        error={error}
+      />
 
       {!events ? (
         <div className="mt-8"><EmptyState title={t('repro.noData')} description={t('repro.noDataDesc')} /></div>

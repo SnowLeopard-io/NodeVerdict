@@ -9,7 +9,7 @@ import { fingerprintTrace, recallSimilarFrom, loadRcaHistory, appendRcaHistory }
 import type { RcaSimilarity } from '../../shared/ai/rca-memory';
 import { createWorkerClient } from '../../shared/workers/worker-factory';
 import type { TracingWorkerInput, TracingWorkerOutput } from '../../shared/workers/tracing-handler';
-import { FileUpload, EmptyState, StatCard } from '../../shared/components';
+import { UploadHeader, EmptyState, StatCard } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import type { TraceViewerData, TraceSpan, TracingEvent } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
@@ -158,7 +158,7 @@ export function AiRcaPage() {
       }
     }, [getWorker]),
   });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+  const { error, handleReset: uploadReset } = upload;
 
   function extractEvents(content: string): TracingEvent[] {
     try {
@@ -319,33 +319,16 @@ export function AiRcaPage() {
         onSave={async () => { setModalOpen(false); await runDiagnosis(false); }}
       />
 
-      <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('aiRca.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('aiRca.subtitle')}</p>
-        </div>
-        <div className="w-full max-w-2xl">
-        <FileUpload
-          onFile={handleFile}
-          accept=".json,.ndv"
-          label={t('aiRca.uploadLabel')}
-          maxSize={500 * 1024 * 1024}
-          fileName={fileName}
-          fileSize={fileSize}
-          onReset={handleReset}
-          loading={loading}
-          progress={progress}
-          onUrlLoad={loadFromUrl}
-          urlLoading={urlLoading}
-          urlError={urlError}
-          urlProgress={urlProgress}
-          onUrlCancel={cancelUrl}
-        />
-        {(error || urlError) && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
-        </div>
-      </div>
-
-      {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      <UploadHeader
+        title={t('aiRca.title')}
+        description={t('aiRca.subtitle')}
+        api={upload}
+        accept=".json,.ndv"
+        label={t('aiRca.uploadLabel')}
+        maxSize={500 * 1024 * 1024}
+        onReset={handleReset}
+        error={error}
+      />
 
       {!analysis ? (
         <div className="mt-8">

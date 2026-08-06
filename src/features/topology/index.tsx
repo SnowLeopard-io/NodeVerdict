@@ -6,7 +6,7 @@ import type { TopologyGraph, RootCauseReport, ServiceNode, ServiceHealth } from 
 import type { TracingEvent, TraceViewerData } from '../../shared/types';
 import { useRootStore, useUIStore } from '../../stores';
 import { useI18n } from '../../shared/i18n/useI18n';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { TopologyGraphCanvas } from './components/TopologyGraphCanvas';
 import { RootCausePanel } from './components/RootCausePanel';
 import { ServiceDetail } from './components/ServiceDetail';
@@ -80,7 +80,7 @@ export function TopologyPage() {
       }
     }, [getWorker]),
   });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+  const { error, handleReset: uploadReset } = upload;
 
    function applyEvents(evts: TracingEvent[], viewerData: TraceViewerData) {
     const result = analyzeDistributed(evts);
@@ -116,65 +116,40 @@ export function TopologyPage() {
   if (!graph || !report) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('topology.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('topology.uploadHint')}</p>
-        </div>
-        <FileUpload
-          onFile={handleFile}
+        <UploadHeader
+          title={t('topology.title')}
+          description={t('topology.uploadHint')}
+          api={upload}
           accept=".json,.ndv"
           label={t('topology.uploadTitle')}
           maxSize={500 * 1024 * 1024}
-          fileName={fileName}
-          fileSize={fileSize}
           onReset={handleReset}
-          loading={loading}
-          progress={progress}
-          onUrlLoad={loadFromUrl}
-          urlLoading={urlLoading}
-          urlError={urlError}
-          urlProgress={urlProgress}
-          onUrlCancel={cancelUrl}
+          error={error}
         />
-        {(error || urlError) && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
         <div className="mt-8">
           <EmptyState title={t('topology.noData')} description={t('topology.noDataDesc')} />
         </div>
-        <LoadingOverlay visible={loading || urlLoading || topologyLoading} />
+        <LoadingOverlay visible={upload.loading || upload.urlLoading || topologyLoading} />
       </div>
     );
   }
 
   return (
     <div className="p-6">
-      <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
+      <div className="mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('topology.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {t('topology.summary').replace('{services}', String(graph.services)).replace('{traces}', String(graph.traces))}
           </p>
         </div>
-        <div className="w-72 shrink-0">
-            <FileUpload
-              onFile={handleFile}
-              accept=".json,.ndv"
-              label={t('topology.uploadTitle')}
-              maxSize={500 * 1024 * 1024}
-              fileName={fileName}
-              fileSize={fileSize}
-              onReset={handleReset}
-              loading={loading}
-              progress={progress}
-              onUrlLoad={loadFromUrl}
-              urlLoading={urlLoading}
-              urlError={urlError}
-              urlProgress={urlProgress}
-              onUrlCancel={cancelUrl}
-            />
-          </div>
-        </div>
+      </div>
 
-        {(error || urlError) && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
+      <div className="mb-4">
+        <WideUpload api={upload} accept=".json,.ndv" label={t('topology.uploadTitle')} maxSize={500 * 1024 * 1024} onReset={handleReset} error={error} />
+      </div>
+
+        {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <div className="grid grid-cols-4 gap-3 mb-4">
         <StatCard title={t('topology.services')} value={String(graph.services)} />

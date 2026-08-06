@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useRootStore } from '../../stores';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { analyzeTracingEvents } from '../../shared/engine';
-import { ChannelFilter, FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { ChannelFilter, UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { formatDuration } from '../../shared/utils';
 import type { TracingEvent } from '../../shared/types';
 import { useI18n } from '../../shared/i18n/useI18n';
@@ -40,7 +40,7 @@ export function SearchFilterPage() {
   }, [setTracingAnalysis]);
 
   const upload = useUnifiedFileUpload({ onFile: handleFileRead });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+  const { error, handleReset: uploadReset } = upload;
 
   function handleReset() {
     uploadReset();
@@ -123,13 +123,17 @@ export function SearchFilterPage() {
    if (!tracingAnalysis) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('searchFilter.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('searchFilter.description')}</p>
-        </div>
-        <FileUpload onFile={handleFile} accept=".json" label={t('searchFilter.uploadHint')} maxSize={500 * 1024 * 1024} fileName={fileName} fileSize={fileSize} onReset={handleReset} loading={loading} progress={progress} />
-        {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-        <LoadingOverlay visible={loading || urlLoading} message={t('searchFilter.loading')} />
+        <UploadHeader
+          title={t('searchFilter.title')}
+          description={t('searchFilter.description')}
+          api={upload}
+          accept=".json"
+          label={t('searchFilter.uploadHint')}
+          maxSize={500 * 1024 * 1024}
+          onReset={handleReset}
+          error={error}
+        />
+        <LoadingOverlay visible={upload.loading || upload.urlLoading} message={t('searchFilter.loading')} />
         <div className="mt-8">
           <EmptyState title={t('searchFilter.noData')} description={t('searchFilter.description')} />
         </div>
@@ -139,13 +143,13 @@ export function SearchFilterPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-4 flex items-start justify-between">
+      <div className="mb-4">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('searchFilter.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">{t('searchFilter.eventsTotal').replace('{count}', tracingAnalysis.totalEvents.toLocaleString())}</p>
         </div>
-        <div className="w-72">
-<FileUpload onFile={handleFile} accept=".json" label={t('searchFilter.uploadHint')} maxSize={500 * 1024 * 1024} fileName={fileName} fileSize={fileSize} onReset={handleReset} loading={loading} progress={progress} onUrlLoad={loadFromUrl} urlLoading={urlLoading} urlError={urlError} urlProgress={urlProgress} onUrlCancel={cancelUrl} />
+        <div className="mt-4">
+<WideUpload api={upload} accept=".json" label={t('searchFilter.uploadHint')} maxSize={500 * 1024 * 1024} onReset={handleReset} error={error} />
         </div>
       </div>
 

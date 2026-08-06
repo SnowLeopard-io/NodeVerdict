@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useEffect, useState } from 'react';
 import { useRootStore } from '../../stores/root-store';
-import { FileUpload, StatCard, EmptyState } from '../../shared/components';
+import { UploadHeader, WideUpload, StatCard, EmptyState } from '../../shared/components';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { formatBytes } from '../../shared/utils';
 import { detectLeakPattern, getGrowthTrend } from '../../shared/engine/snapshot-history';
@@ -187,7 +187,7 @@ export function SnapshotHistoryPage() {
    }, [setSnapshotHistory, t]);
 
    const upload = useUnifiedFileUpload({ onFile: applyRecords });
-   const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+   const { error, handleReset: uploadReset } = upload;
 
    const leakPattern = useMemo(() => detectLeakPattern(snapshotHistory), [snapshotHistory]);
    const trendData = useMemo(() => getGrowthTrend(snapshotHistory), [snapshotHistory]);
@@ -211,26 +211,15 @@ export function SnapshotHistoryPage() {
     <div className="p-6">
       {snapshotHistory.length === 0 ? (
         <div className="max-w-3xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('snapshot.title')}</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('snapshot.description')}</p>
-          </div>
-          <FileUpload
-            onFile={handleFile}
+          <UploadHeader
+            title={t('snapshot.title')}
+            description={t('snapshot.description')}
+            api={upload}
             accept=".json"
             label={t('snapshot.uploadLabel')}
-            fileName={fileName}
-            fileSize={fileSize}
             onReset={handleReset}
-            loading={loading}
-            progress={progress}
-            onUrlLoad={loadFromUrl}
-            urlLoading={urlLoading}
-            urlError={urlError}
-            urlProgress={urlProgress}
-            onUrlCancel={cancelUrl}
+            error={error}
           />
-          {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
           <div className="mt-8">
             <EmptyState
               title={t('snapshot.empty')}
@@ -264,25 +253,11 @@ export function SnapshotHistoryPage() {
               >
                 {t('snapshot.clear')}
               </button>
-              <div className="w-72">
-                <FileUpload
-                  onFile={handleFile}
-                  accept=".json"
-                  label={t('snapshot.uploadLabel')}
-                  fileName={fileName}
-                  fileSize={fileSize}
-                  onReset={handleReset}
-                  loading={loading}
-                  progress={progress}
-                  onUrlLoad={loadFromUrl}
-                  urlLoading={urlLoading}
-                  urlError={urlError}
-                  urlProgress={urlProgress}
-                  onUrlCancel={cancelUrl}
-                />
-              </div>
-              {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
             </div>
+          </div>
+
+          <div className="mb-4">
+            <WideUpload api={upload} accept=".json" label={t('snapshot.uploadLabel')} onReset={handleReset} error={error} />
           </div>
 
       {/* Leak Pattern Alert */}

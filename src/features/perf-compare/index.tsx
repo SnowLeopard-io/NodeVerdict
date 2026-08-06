@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { analyzeTracingEvents, buildWaterfall, findBottlenecks } from '../../shared/engine';
 import { useUnifiedFileUpload } from '../../shared/hooks';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { PageHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { ExportButton } from '../report/ExportButton';
 import { toMarkdown } from '../report/exportUtils';
 import { formatDuration } from '../../shared/utils';
@@ -44,15 +44,12 @@ export function PerfComparePage() {
     }, []),
   });
 
-  const { loading: loadingA, error: errorA, fileName: fileNameA, fileSize: fileSizeA, handleFile: handleFileA, progress: progressA, urlLoading: urlLoadingA, urlError: urlErrorA, urlProgress: urlProgressA, loadFromUrl: loadFromUrlA, cancelUrl: cancelUrlA, handleReset: resetA } = uploadA;
-  const { loading: loadingB, error: errorB, fileName: fileNameB, fileSize: fileSizeB, handleFile: handleFileB, progress: progressB, urlLoading: urlLoadingB, urlError: urlErrorB, urlProgress: urlProgressB, loadFromUrl: loadFromUrlB, cancelUrl: cancelUrlB, handleReset: resetB } = uploadB;
-
-  const loading = loadingA || loadingB;
-  const uploadError = errorA || errorB;
+  const loading = uploadA.loading || uploadB.loading;
+  const uploadError = uploadA.error || uploadB.error;
 
   function handleReset() {
-    resetA();
-    resetB();
+    uploadA.handleReset();
+    uploadB.handleReset();
     setDataA(null);
     setDataB(null);
     setErrorMsg(null);
@@ -100,21 +97,16 @@ export function PerfComparePage() {
   if (!dataA || !dataB) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('perfCompare.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('perfCompare.description')}</p>
-        </div>
+        <PageHeader title={t('perfCompare.title')} description={t('perfCompare.description')} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('perfCompare.beforeBaseline')}</p>
-            <FileUpload onFile={handleFileA} accept=".json" label={t('perfCompare.uploadBefore')} maxSize={500 * 1024 * 1024} fileName={fileNameA} fileSize={fileSizeA} onReset={() => { setDataA(null); }} loading={loadingA} progress={progressA} onUrlLoad={loadFromUrlA} urlLoading={urlLoadingA} urlError={urlErrorA} urlProgress={urlProgressA} onUrlCancel={cancelUrlA} />
-            {(errorA || urlErrorA) && <p className="text-sm text-red-600 dark:text-red-400">{errorA ?? urlErrorA}</p>}
+            <WideUpload api={uploadA} accept=".json" label={t('perfCompare.uploadBefore')} maxSize={500 * 1024 * 1024} onReset={() => setDataA(null)} />
           </div>
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">{t('perfCompare.uploadAfter')}</p>
-            <FileUpload onFile={handleFileB} accept=".json" label={t('perfCompare.uploadAfter')} maxSize={500 * 1024 * 1024} fileName={fileNameB} fileSize={fileSizeB} onReset={() => { setDataB(null); }} loading={loadingB} progress={progressB} onUrlLoad={loadFromUrlB} urlLoading={urlLoadingB} urlError={urlErrorB} urlProgress={urlProgressB} onUrlCancel={cancelUrlB} />
-            {(errorB || urlErrorB) && <p className="text-sm text-red-600 dark:text-red-400">{errorB ?? urlErrorB}</p>}
+            <WideUpload api={uploadB} accept=".json" label={t('perfCompare.uploadAfter')} maxSize={500 * 1024 * 1024} onReset={() => setDataB(null)} />
           </div>
         </div>
 

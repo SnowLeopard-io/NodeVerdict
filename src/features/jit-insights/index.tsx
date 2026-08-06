@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useUnifiedFileUpload } from '../../shared/hooks';
 import { parseV8Trace, analyzeJit, generatePatches } from '../../shared/engine';
 import type { JitAnalysis, JitFinding } from '../../shared/types';
-import { FileUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
+import { UploadHeader, WideUpload, EmptyState, StatCard, LoadingOverlay } from '../../shared/components';
 import { useUIStore } from '../../stores';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { ExportButton } from '../report/ExportButton';
@@ -51,7 +51,7 @@ export function JitInsightsPage() {
       }
     }, [t]),
   });
-  const { loading, error, fileName, fileSize, handleFile, progress, urlLoading, urlError, urlProgress, loadFromUrl, cancelUrl, handleReset: uploadReset } = upload;
+  const { error, handleReset: uploadReset } = upload;
 
   const displayError = parseError || error;
 
@@ -77,31 +77,20 @@ export function JitInsightsPage() {
   if (!analysis || !demoTrace) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('jitInsights.title')}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('jitInsights.description')}</p>
-        </div>
-        <FileUpload
-          onFile={handleFile}
+        <UploadHeader
+          title={t('jitInsights.title')}
+          description={t('jitInsights.description')}
+          api={upload}
           accept=".txt,.log"
           label={t('jitInsights.uploadTitle')}
           maxSize={512 * 1024 * 1024}
-          fileName={fileName}
-          fileSize={fileSize}
           onReset={handleReset}
-          loading={loading}
-          progress={progress}
-          onUrlLoad={loadFromUrl}
-          urlLoading={urlLoading}
-          urlError={urlError}
-          urlProgress={urlProgress}
-          onUrlCancel={cancelUrl}
+          error={displayError}
         />
-        {(error || urlError) && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
         <div className="mt-8">
           <EmptyState title={t('jitInsights.noData')} description={t('jitInsights.description')} />
         </div>
-        <LoadingOverlay visible={loading || urlLoading} />
+        <LoadingOverlay visible={upload.loading || upload.urlLoading} />
       </div>
     );
   }
@@ -110,34 +99,15 @@ export function JitInsightsPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
+      <div className="mb-4">
+        <div className="mb-4 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t('jitInsights.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {t('jitInsights.summary').replace('{ic}', demoTrace.icEvents.length.toLocaleString()).replace('{opt}', demoTrace.optEvents.length.toLocaleString()).replace('{deopt}', demoTrace.deoptEvents.length.toLocaleString())}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-56">
-            <FileUpload
-              onFile={handleFile}
-              accept=".txt,.log"
-              label={t('jitInsights.uploadTitle')}
-              maxSize={512 * 1024 * 1024}
-              fileName={fileName}
-              fileSize={fileSize}
-              onReset={handleReset}
-              loading={loading}
-              progress={progress}
-              onUrlLoad={loadFromUrl}
-              urlLoading={urlLoading}
-              urlError={urlError}
-              urlProgress={urlProgress}
-              onUrlCancel={cancelUrl}
-            />
-            {(error || urlError) && <p className="text-sm text-red-600 dark:text-red-400">{error ?? urlError}</p>}
-          </div>
-          <ExportButton
+        <ExportButton
             filename="jit-insights"
             onExportMarkdown={() => toMarkdown({
               title: t('jitInsights.exportTitle'),
@@ -180,6 +150,10 @@ export function JitInsightsPage() {
             })}
           />
         </div>
+      </div>
+
+      <div className="mb-4">
+        <WideUpload api={upload} accept=".txt,.log" label={t('jitInsights.uploadTitle')} maxSize={512 * 1024 * 1024} onReset={handleReset} error={displayError} />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
