@@ -15,6 +15,7 @@
 - [Features](#features)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
+- [More Capabilities](#more-capabilities)
 - [Architecture](#architecture)
 - [Examples](#examples)
 - [Browser Support](#browser-support)
@@ -362,6 +363,58 @@ The waterfall is no longer a `N × 3`-node SVG that freezes on 100k spans.
 - **Viewport culling** — only the rows inside `[scrollTop, scrollTop + viewportHeight]` (plus an overscan buffer) are rendered; DOM count is O(visible), independent of total span count
 - **Zero-visual-change** — still D3 SVG, same look; a small footer shows `Showing {shown} of {total} spans (viewport)`
 - **Deliberately scoped** — row virtualization only; no WebGL/Canvas rewrite, no LOD down-sampling (a waterfall's bottleneck is row count, not horizontal density)
+
+---
+
+## More Capabilities
+
+### 29. CPU Profile Diff (NEW)
+
+Compare two CPU profiles to see which hotspots grew, shrank, or disappeared between builds.
+
+- **Side-by-side flamegraph diff** — Highlight changed hotspots across two profiles
+- **Function-level delta summary** — Quickly spot functions that regressed or improved
+- **Regression-oriented workflow** — Useful for validating performance changes across releases
+
+### 30. Source Attribution (NEW)
+
+Map hot or failing operations back to the source file and function that produced them.
+
+- **Trace-to-source linkage** — Connect stack frames and diagnostic events to authored code
+- **Source map support** — Works with V3 source maps and project-root-based resolution
+- **Faster triage** — Helps isolate regressions to app code instead of dependency internals
+
+### 31. OTel Continuous Ingest (NEW)
+
+Continuously ingest OpenTelemetry batches and rebuild topology and health signals directly in the browser.
+
+- **Streaming batch intake** — Process incoming OTel exports over time
+- **Live topology updates** — Recompute service dependencies and health state as data arrives
+- **Operational monitoring** — Useful for ongoing observability and incident workflows
+
+### 32. Report Diff (NEW)
+
+Compare two generated reports side-by-side to understand what changed between runs.
+
+- **Per-channel deltas** — Inspect how latency, errors, and activity shifted
+- **Heap and error-rate comparison** — See regressions at a glance
+- **Quick review workflow** — Useful for PRs, releases, and incident follow-ups
+
+### 33. CI Baseline (NEW)
+
+Use NodeVerdict as a reusable performance baseline and gating layer in CI.
+
+- **Reusable performance gate** — Apply the same thresholds across builds and branches
+- **Baseline report generation** — Compare current runs against a known-good standard
+- **PR-friendly workflow** — Make regressions visible before they ship
+
+### 34. Repro Generator (NEW)
+
+Export the hot subset of a trace as a self-contained Node.js reproduction script.
+
+- **Minimal repro export** — Shrink large traces into focused reproduction cases
+- **Bug report friendliness** — Easier to share and investigate offline
+- **Faster diagnosis** — Helps turn a noisy trace into a concise reproduction path
 
 ---
 
