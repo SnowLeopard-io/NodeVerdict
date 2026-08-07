@@ -24,6 +24,11 @@ function getInitialDarkMode(): boolean {
     const stored = localStorage.getItem('nodeverdict-darkmode');
     if (stored !== null) return stored === 'true';
   } catch {}
+
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
@@ -33,6 +38,24 @@ function getInitialLanguage(): SupportedLanguage {
     if (stored === 'zh' || stored === 'en') return stored;
   } catch {}
   return 'zh';
+}
+
+function applyThemePreference(darkMode: boolean): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.toggle('dark', darkMode);
+}
+
+function applyLanguagePreference(language: SupportedLanguage): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.lang = language;
+}
+
+function persistDarkMode(darkMode: boolean): void {
+  try { localStorage.setItem('nodeverdict-darkmode', String(darkMode)); } catch {}
+}
+
+function persistLanguage(language: SupportedLanguage): void {
+  try { localStorage.setItem('nodeverdict-language', language); } catch {}
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -47,22 +70,23 @@ export const useUIStore = create<UIState>((set) => ({
   darkMode: getInitialDarkMode(),
   toggleDarkMode: () => set((s) => {
     const next = !s.darkMode;
-    try { localStorage.setItem('nodeverdict-darkmode', String(next)); } catch {}
-    if (next) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    persistDarkMode(next);
+    applyThemePreference(next);
     return { darkMode: next };
   }),
   language: getInitialLanguage(),
-  setLanguage: (lang) => set((s) => {
-    try { localStorage.setItem('nodeverdict-language', lang); } catch {}
+  setLanguage: (lang) => set(() => {
+    persistLanguage(lang);
+    applyLanguagePreference(lang);
     return { language: lang };
   }),
   toggleLanguage: () => set((s) => {
     const next: SupportedLanguage = s.language === 'zh' ? 'en' : 'zh';
-    try { localStorage.setItem('nodeverdict-language', next); } catch {}
+    persistLanguage(next);
+    applyLanguagePreference(next);
     return { language: next };
   }),
 }));
+
+applyThemePreference(useUIStore.getState().darkMode);
+applyLanguagePreference(useUIStore.getState().language);

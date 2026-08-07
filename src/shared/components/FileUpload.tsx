@@ -55,7 +55,10 @@ export function FileUpload({
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) validateAndProcess(file);
+    if (file) {
+      validateAndProcess(file);
+      e.target.value = '';
+    }
   }, [onFile, maxSize]);
 
   function validateAndProcess(file: File) {

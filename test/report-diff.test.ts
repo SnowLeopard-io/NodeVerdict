@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest';
+// @vitest-environment jsdom
+import { describe, it, expect, vi } from 'vitest';
 import { diffReports, renderDiffMarkdown } from '../src/shared/engine/report-diff';
+import { compressReport } from '../src/shared/engine/report-generator';
 import type { ReportData } from '../src/shared/types';
+import { parseReportText } from '../src/features/report-diff';
 
 function report(over: Partial<ReportData>): ReportData {
   return { version: 1, generatedAt: 0, keyFindings: [], ...over };
@@ -69,5 +72,18 @@ describe('renderDiffMarkdown', () => {
     const md = renderDiffMarkdown(diffReports(base, after), 'en');
     expect(md).toMatch(/Report Diff/);
     expect(md).toMatch(/db \| \+70\.0 \| \+70\.0/);
+  });
+});
+
+describe('parseReportText', () => {
+  it('parses compressed report payloads from share links', () => {
+    const compressed = compressReport(base);
+    const sharedUrl = `https://example.com/report#${encodeURIComponent(compressed)}`;
+    expect(parseReportText(sharedUrl)).toEqual(base);
+  });
+
+  it('extracts report JSON embedded in HTML responses', () => {
+    const html = `<html><body><script type="application/json">${JSON.stringify(base)}</script></body></html>`;
+    expect(parseReportText(html)).toEqual(base);
   });
 });
