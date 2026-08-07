@@ -3,7 +3,10 @@ import { readFileSync } from 'node:fs';
 import { analyzeDifferential } from '../src/shared/differential';
 import { buildDistributedTraces } from '../src/shared/distributed/span-tree';
 import { buildTopology } from '../src/shared/distributed/topology';
-import { loadTracingData, parseGcLog, parseMemoryTimeline, calculateGrowthRate } from '../src/shared/engine';
+import { loadTracingData, analyzeTracingEvents, parseGcLog, parseMemoryTimeline, calculateGrowthRate, buildWaterfall } from '../src/shared/engine';
+import { diffCpuProfiles } from '../src/shared/engine/cpu-profile-diff';
+import { analyzeCpuProfile } from '../src/shared/engine/cpu-profile-parser';
+import { attributeSpans } from '../src/shared/source/source-attribution';
 import type { TracingEvent } from '../src/shared/types';
 
 describe('differential debug sample pairs', () => {
@@ -60,5 +63,55 @@ describe('memory timeline leak sample', () => {
     expect(timeline.snapshots.length).toBeGreaterThan(40);
     expect(rate.flagged).toBe(true);
     expect(rate.rssGrowthRateMs).toBeGreaterThan(2);
+  });
+});
+
+describe('cpu profile diff sample pair', () => {
+  it('shows grown / added / removed hotspots between baseline and regressed profile', () => {
+    const before = analyzeCpuProfile(readFileSync('examples/cpu-profile-sample.cpuprofile', 'utf8'));
+    const after = analyzeCpuProfile(readFileSync('examples/cpu-profile-diff-after.cpuprofile', 'utf8'));
+    const diff = diffCpuProfiles(before, after);
+
+    expect(diff.entries.length).toBeGreaterThan(0);
+    expect(diff.grownCount + diff.addedCount).toBeGreaterThan(0);
+
+    const added = diff.entries.find(e => e.functionName === 'queryBuilder' && e.kind === 'added');
+    expect(added).toBeTruthy();
+
+    const removed = diff.entries.find(e => e.functionName === 'serialize' && e.kind === 'removed');
+    expect(removed).toBeTruthy();
+  });
+});
+
+describe('source-attribution sample', () => {
+  it('attributes error stacks in the sample to app source sites', () => {
+    const content = readFileSync('examples/source-attribution.json', 'utf8');
+    const events = analyzeTracingEvents(loadTracingData(content));
+    const roots = buildWaterfall(events.operations, events.events);
+    const flatten = (ss: typeof roots): typeof roots => ss.flatMap(s => [s, ...flatten(s.children)]);
+    const spans = flatten(roots);
+
+    const attribution = attributeSpans(spans);
+    expect(attribution.sites.length).toBeGreaterThan(0);
+    expect(attribution.appFiles).toBeGreaterThan(0);
+    expect(attribution.filteredFrames).toBeGreaterThan(attribution.totalFrames > 0 ? 0 : -1);
+
+    const files = new Set(attribution.sites.map(s => s.file));
+    expect([...files].every(f => !f.startsWith('node:'))).toBe(true);
+
+    // The pool connect timeout (5000ms) should be the top hot site.
+    const top = attribution.sites[0];
+    expect(top.totalDuration).toBeGreaterThan(0);
+    expect(top.errorCount).toBeGreaterThan(0);
+
+    // Query spans attach error stacks via span.metadata.error.
+    const hasAppRepositorySite = attribution.sites.some(s => s.file.includes('Repository.ts'));
+    expect(hasAppRepositorySite).toBe(true);
+
+    // "lost" source coordinates survive end-to-end into the attributed rows.
+    const csv = attribution.sites.find(s => s.functionName === 'generateReport');
+    expect(csv).toBeTruthy();
+    expect(csv?.file).toContain('reporters/csv.ts');
+    expect(csv?.line).toBe(12);
   });
 });

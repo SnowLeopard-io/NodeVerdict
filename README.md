@@ -84,7 +84,7 @@ Visualize async operation chains using `asyncStart`/`asyncEnd` events.
 
 ![Trace Waterfall](./introduction/TraceWaterfall.png)
 
-### 3. CPU Profiler (NEW)
+### 3. CPU Profiler 
 
 Upload `.cpuprofile` files from Node.js (`--cpu-prof`) or Chrome DevTools to visualize CPU usage.
 
@@ -105,7 +105,7 @@ Upload `.heapsnapshot` files from Node.js for memory analysis.
 
 ![Heap Analysis](./introduction/HeapAnalysis.png)
 
-### 5. Heap Snapshot Diff (NEW)
+### 5. Heap Snapshot Diff 
 
 Compare two `.heapsnapshot` files side-by-side to identify memory growth and new objects.
 
@@ -116,7 +116,7 @@ Compare two `.heapsnapshot` files side-by-side to identify memory growth and new
 
 ![Heap Diff Results](./introduction/HeapDiffResults.png)
 
-### 6. Time Series Analysis (NEW)
+### 6. Time Series Analysis 
 
 Visualize event throughput, latency distribution, and performance trends over time.
 
@@ -127,7 +127,7 @@ Visualize event throughput, latency distribution, and performance trends over ti
 
 ![Time Series Analysis](./introduction/TimeSeriesAnalysis.png)
 
-### 7. Performance Comparison (NEW)
+### 7. Performance Comparison 
 
 Compare two sets of tracing data to identify performance regressions or improvements.
 
@@ -149,7 +149,7 @@ For library maintainers and APM tool developers to verify TracingChannel impleme
 
 ![Validation Results](./introduction/ValidationResults.png)
 
-### 9. Search & Filter (NEW)
+### 9. Search & Filter 
 
 Advanced search and filtering across all tracing events.
 
@@ -170,11 +170,11 @@ Generate compressed reports encoded in the URL — share via GitHub Issues, Slac
 - **Zero Infrastructure** — Reports are encoded in the URL hash using `lz-string` compression
 - **One-Click Copy** — Copy the shareable link with a single button
 - **Key Findings** — Auto-generated summaries (e.g., "mysql2:query avg 120ms, P95 450ms")
-- **Offline HTML Export (NEW)** — Download a standalone HTML file with all data and charts embedded, styled like a professional report, no server needed to view
+- **Offline HTML Export ** — Download a standalone HTML file with all data and charts embedded, styled like a professional report, no server needed to view
 
 ![Diagnostic Report](./introduction/DiagnosticReport.png)
 
-### 11. Memory Timeline (NEW)
+### 11. Memory Timeline 
 
 Upload `process.memoryUsage()` time series data to visualize memory growth trends over time.
 
@@ -184,7 +184,7 @@ Upload `process.memoryUsage()` time series data to visualize memory growth trend
 
 ![Memory Timeline](./introduction/MemoryTimeline.png)
 
-### 12. GC Log Analyzer (NEW)
+### 12. GC Log Analyzer 
 
 Parse V8 `--trace-gc` log files to analyze garbage collection behavior and external memory pressure.
 
@@ -194,7 +194,7 @@ Parse V8 `--trace-gc` log files to analyze garbage collection behavior and exter
 
 ![GC Log Analyzer](./introduction/GCLogAnalyzer.png)
 
-### 13. Live Monitor (NEW)
+### 13. Live Monitor 
 
 Connect to a running Node.js process in real-time via WebSocket — no restart, no dump file needed.
 
@@ -205,7 +205,7 @@ Connect to a running Node.js process in real-time via WebSocket — no restart, 
 
 ![Live Monitor](./introduction/LiveMonitor.png)
 
-### 14. Alert Rules (NEW)
+### 14. Alert Rules 
 
 Define threshold rules over trace/heap metrics and see exactly which rules are firing.
 
@@ -226,7 +226,7 @@ Built-in interactive guide covering how to generate diagnostic data from Node.js
 
 ![NodeVerdict Tutorial](./introduction/NodeVerdictTutorial.png)
 
-### 16. AI Root Cause Analysis (NEW)
+### 16. AI Root Cause Analysis 
 
 One-click root-cause diagnosis powered by an LLM (or local heuristics when no API key is set).
 
@@ -238,13 +238,13 @@ One-click root-cause diagnosis powered by an LLM (or local heuristics when no AP
 
 ![AI Root Cause](./introduction/AIRootCauseAnalysis.png)
 
-### 17. OpenTelemetry Import & .ndv Binary Format (NEW)
+### 17. OpenTelemetry Import & .ndv Binary Format 
 
 - **OTel-native** — Drop in a standard OTLP/JSON trace export (or jaeger-style JSON) and every page auto-detects and converts it to the internal event model. No Jaeger/collector needed.
 - **Compact `.ndv` Format** — Export traces as a memory-map friendly binary (~45% the size of JSON). The Trace Viewer imports/exports `.ndv`; the layout is designed so a Rust/WASM decoder can read the same buffer.
 - **Shared Loader** — One loader normalizes all three sources (NodeVerdict JSON, OTel JSON, `.ndv`) across every feature.
 
-### 18. Performance Gate CLI (NEW)
+### 18. Performance Gate CLI 
 
 Turn traces into a CI gate.
 
@@ -253,7 +253,7 @@ Turn traces into a CI gate.
 - **GitHub Actions** — `.github/workflows/perf-gate.yml` runs the gate on every PR and posts a diff-style report as a PR comment
 - **Outputs** — Human-readable markdown or `--json` for machine consumption
 
-### 19. NodeVerdictExporter SDK (NEW)
+### 19. NodeVerdictExporter SDK 
 
 Stream OTel spans from your running Node.js service directly into the viewer.
 
@@ -262,7 +262,7 @@ Stream OTel spans from your running Node.js service directly into the viewer.
 - **Formats** — Native events JSON or OTLP/JSON output, both directly importable in the browser
 - See [`exporter/README.md`](./exporter/README.md) for the full guide.
 
-### 20. Service Topology & Distributed Root Cause (NEW)
+### 20. Service Topology & Distributed Root Cause 
 
 Turn cross-service OTel traces into a live dependency map and a ranked root-cause verdict — fully in the browser.
 
@@ -276,7 +276,7 @@ Turn cross-service OTel traces into a live dependency map and a ranked root-caus
 
 ![Service Topology](./introduction/ServiceTopology.png)
 
-### 21. Streaming Large-File Import (NEW)
+### 21. Streaming Large-File Import 
 
 Never `JSON.parse` a multi-GB file again. Large trace files are parsed incrementally in a dedicated Web Worker so the UI thread is never blocked and memory stays bounded.
 
@@ -290,7 +290,7 @@ Never `JSON.parse` a multi-GB file again. Large trace files are parsed increment
 
 > **Roadmap** — the same interface is designed so the tokenizer/analyzer core can later be swapped for a Rust + WASM implementation (`wasm-bindgen` + `serde`) to push raw throughput toward the 200MB/5s target; streaming, worker, retention, and progress plumbing stay unchanged.
 
-### 22. Differential Debug (NEW)
+### 22. Differential Debug 
 
 Compare a *normal* and a *fault* execution trace of the same code path to localize exactly where and why the two runs diverged — the debugging analog of a git diff for execution traces.
 
@@ -306,7 +306,7 @@ Compare a *normal* and a *fault* execution trace of the same code path to locali
 
 ![JIT Insights](./introduction/JITInsights.png)
 
-### 23. Snapshot History (NEW)
+### 23. Snapshot History 
 
 Track heap snapshot comparison results over time to identify memory trends. Every comparison you save in the Heap Diff view is recorded here as a history entry, letting you watch retained size, node counts, and growth rates across successive snapshots.
 
@@ -318,7 +318,7 @@ Track heap snapshot comparison results over time to identify memory trends. Ever
 
 ![Snapshot History](./introduction/SnapshotDiffHistory.png)
 
-### 24. Streaming Causal Graph Reconstruction (NEW)
+### 24. Streaming Causal Graph Reconstruction 
 
 Turn a flat, possibly-broken stream of TracingChannel events into a **causal DAG** — *why* things happen, not just *when*.
 
@@ -328,7 +328,7 @@ Turn a flat, possibly-broken stream of TracingChannel events into a **causal DAG
 - **Loop detection** — a valid causal DAG is acyclic; DFS finds back edges, flags the involved nodes, and reports the cycle
 - **Orphan semantics** — a node is an orphan only when a *declared* relationship is broken (missing parent / end-without-start); a genuine root is not an orphan
 
-### 25. Real-time Streaming RCA (NEW)
+### 25. Real-time Streaming RCA 
 
 Root-cause inference that runs on a *partial* trace — verdicts arrive while data is still streaming in, with uncertainty made explicit.
 
@@ -338,7 +338,7 @@ Root-cause inference that runs on a *partial* trace — verdicts arrive while da
 - **Uncertainty labeling** — open (unclosed) spans carry a penalized confidence; overall confidence scales with how much closed evidence has accumulated
 - **Early warnings** — coarse channel-level alerts (`critical`/`warning`) generated independently of the graph, before a precise verdict is possible
 
-### 26. Trace-to-Code Reverse Mapping (NEW)
+### 26. Trace-to-Code Reverse Mapping 
 
 Link every stack frame back to the *authored* source — no manual `node_modules/...:234:5` archaeology.
 
@@ -347,7 +347,7 @@ Link every stack frame back to the *authored* source — no manual `node_modules
 - **Node.js C++ / built-in filtering** — `node::...`, `* internalBinding *`, `node:internal/...`, `[eval]` frames are surfaced (not hidden) as filtered, while `node_modules` stays app code
 - **File System Access bridge** — pick a project root once, read `.map` files on demand; degrades to a no-op stub on unsupported contexts
 
-### 27. Elastic Alignment & Noise Suppression (NEW)
+### 27. Elastic Alignment & Noise Suppression 
 
 Two runs of identical code still diverge by GC pauses, DNS/TCP setup and timer jitter. This layer separates *jitter* from *regression* before anything gets reported.
 
@@ -356,7 +356,7 @@ Two runs of identical code still diverge by GC pauses, DNS/TCP setup and timer j
 - **Regression scoring** — `severity = confidence × impact`: confidence is the share of structural changes, impact blends mean significance with channel breadth; `minDeltaMs` adds a second anti-noise floor
 - **Backward compatible** — the full pipeline runs when you pass `{ regression: {} }` to `analyzeDifferential`; without it, behaviour is unchanged
 
-### 28. Viewport-Culled Virtual-Scroll Waterfall (NEW)
+### 28. Viewport-Culled Virtual-Scroll Waterfall 
 
 The waterfall is no longer a `N × 3`-node SVG that freezes on 100k spans.
 
@@ -368,23 +368,29 @@ The waterfall is no longer a `N × 3`-node SVG that freezes on 100k spans.
 
 ## More Capabilities
 
-### 29. CPU Profile Diff (NEW)
+### 29. CPU Profile Diff 
 
 Compare two CPU profiles to see which hotspots grew, shrank, or disappeared between builds.
 
 - **Side-by-side flamegraph diff** — Highlight changed hotspots across two profiles
 - **Function-level delta summary** — Quickly spot functions that regressed or improved
 - **Regression-oriented workflow** — Useful for validating performance changes across releases
+- **Sample companion** — Load `examples/cpu-profile-sample.cpuprofile` (baseline) and `examples/cpu-profile-diff-after.cpuprofile` (regressed) as the two sides
 
-### 30. Source Attribution (NEW)
+![CPU Profile Diff](./introduction/CPUProfileDiff.png)
+
+### 30. Source Attribution 
 
 Map hot or failing operations back to the source file and function that produced them.
 
 - **Trace-to-source linkage** — Connect stack frames and diagnostic events to authored code
 - **Source map support** — Works with V3 source maps and project-root-based resolution
 - **Faster triage** — Helps isolate regressions to app code instead of dependency internals
+- **Sample companion** — Load `examples/source-attribution.json` to see error stacks attributed to app source sites (`src/...`), with the slowest error surfacing first
 
-### 31. OTel Continuous Ingest (NEW)
+![Source Attribution](./introduction/SourceAttribution.png)
+
+### 31. OTel Continuous Ingest 
 
 Continuously ingest OpenTelemetry batches and rebuild topology and health signals directly in the browser.
 
@@ -392,15 +398,7 @@ Continuously ingest OpenTelemetry batches and rebuild topology and health signal
 - **Live topology updates** — Recompute service dependencies and health state as data arrives
 - **Operational monitoring** — Useful for ongoing observability and incident workflows
 
-### 32. Report Diff (NEW)
-
-Compare two generated reports side-by-side to understand what changed between runs.
-
-- **Per-channel deltas** — Inspect how latency, errors, and activity shifted
-- **Heap and error-rate comparison** — See regressions at a glance
-- **Quick review workflow** — Useful for PRs, releases, and incident follow-ups
-
-### 33. CI Baseline (NEW)
+### 32. CI Baseline 
 
 Use NodeVerdict as a reusable performance baseline and gating layer in CI.
 
@@ -408,13 +406,17 @@ Use NodeVerdict as a reusable performance baseline and gating layer in CI.
 - **Baseline report generation** — Compare current runs against a known-good standard
 - **PR-friendly workflow** — Make regressions visible before they ship
 
-### 34. Repro Generator (NEW)
+![CI Baseline](./introduction/CIPerformaceBaseline.png)
+
+### 33. Repro Generator 
 
 Export the hot subset of a trace as a self-contained Node.js reproduction script.
 
 - **Minimal repro export** — Shrink large traces into focused reproduction cases
 - **Bug report friendliness** — Easier to share and investigate offline
 - **Faster diagnosis** — Helps turn a noisy trace into a concise reproduction path
+
+![Repro Generator](./introduction/MinimalReproGenerator.png)
 
 ---
 
@@ -702,6 +704,8 @@ Sample data files are available in the [`examples/`](./examples) directory:
 | `examples/tracing-perf-before.json` | Baseline tracing data: 5 requests with untuned queries (slow JOIN, SELECT *, no cache) | Perf Compare, Trace Viewer |
 | `examples/tracing-perf-after.json` | Optimized version: query improvements, column selection, 7-day filter, ~40-50% latency reduction | Perf Compare, Trace Viewer |
 | `examples/cpu-profile-sample.cpuprofile` | 400-sample CPU profile simulating Express app with DB queries, auth, and caching | CPU Profiler |
+| `examples/cpu-profile-diff-after.cpuprofile` | Regressed CPU profile (same app, ~515 samples): `mysql.query` hotter, added `queryBuilder`, removed `serialize` | CPU Diff (pair with `cpu-profile-sample.cpuprofile`) |
+| `examples/source-attribution.json` | Error spans whose V8 stacks point into `src/...` app code (User/Order repositories, cache, pool, session, csv report) — outer app frame attributed as the hot site | Source Attribution |
 | `examples/heap-sample.heapsnapshot` | Minimal 5-node heap snapshot chain (AppCache → DataStore → SessionManager → LargeBuffer) | Heap Analyzer |
 | `examples/heap-express-app.heapsnapshot` | Realistic Express app heap: closures, event listeners, large buffers, cache entries | Heap Analyzer, Heap Diff |
 | `examples/heap-diff-before.heapsnapshot` | Before snapshot: 11 nodes with small cache (2 entries) and session store | Heap Diff |
@@ -729,6 +733,7 @@ Sample data files are available in the [`examples/`](./examples) directory:
 
 1. **Event Viewer basics** → Upload `examples/tracing-events.json` to see the timeline
 2. **CPU Profiling** → Upload `examples/cpu-profile-sample.cpuprofile` to explore the flame graph
+   - **CPU Diff** → Add `examples/cpu-profile-diff-after.cpuprofile` as the second side to see which hotspots regressed
 3. **Memory Analysis** → Upload `examples/heap-sample.heapsnapshot` to see leak detection
 4. **Heap Diff** → Upload `examples/heap-diff-before.heapsnapshot` and `heap-diff-after.heapsnapshot` in Heap Diff to compare memory growth
 5. **Performance Comparison** → Upload `examples/tracing-perf-before.json` and `tracing-perf-after.json` in Perf Compare to see the optimization impact
@@ -746,6 +751,7 @@ Sample data files are available in the [`examples/`](./examples) directory:
 17. **Binary Export** → In Trace Viewer, upload a trace and click **Export .ndv**, then re-import the `.ndv` file
 18. **OTel Import** → Drop an OTLP/JSON trace export into any page — it is auto-detected and converted
 19. **Service Topology** → Upload `examples/otel-distributed-trace.json` in Service Topology to see the dependency graph, then click the red payment-gateway node to read its root-cause verdict
+20. **Source Attribution** → Upload `examples/source-attribution.json` to see error stacks mapped to app source sites, sorted by attributed duration
 
 ---
 

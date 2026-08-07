@@ -31,7 +31,14 @@ export function SourceAttributionPage() {
   });
   const { handleReset, error } = upload;
 
-  const attribution = useMemo(() => (spans.length ? attributeSpans(spans) : null), [spans]);
+  const flattenChildren = (span: TraceSpan): TraceSpan[] =>
+    span.children.flatMap(child => [child, ...flattenChildren(child)]);
+
+  const attribution = useMemo(() => {
+    if (!spans.length) return null;
+    const allSpans = spans.flatMap(s => [s, ...flattenChildren(s)]);
+    return attributeSpans(allSpans);
+  }, [spans]);
   const rows = attribution?.sites ?? [];
   const totalDuration = attribution?.sites.reduce((s, x) => s + x.totalDuration, 0) ?? 0;
 

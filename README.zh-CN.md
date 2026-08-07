@@ -84,7 +84,7 @@ graph LR
 
 ![Trace Waterfall](./introduction/TraceWaterfall.png)
 
-### 3. CPU 性能分析器（新增）
+### 3. CPU 性能分析器
 
 上传来自 Node.js（`--cpu-prof`）或 Chrome DevTools 的 `.cpuprofile` 文件，可视化 CPU 使用情况。
 
@@ -105,7 +105,7 @@ graph LR
 
 ![Heap Analysis](./introduction/HeapAnalysis.png)
 
-### 5. 堆快照对比（新增）
+### 5. 堆快照对比
 
 并排比较两个 `.heapsnapshot` 文件，识别内存增长和新对象。
 
@@ -116,7 +116,7 @@ graph LR
 
 ![Heap Diff Results](./introduction/HeapDiffResults.png)
 
-### 6. 时间序列分析（新增）
+### 6. 时间序列分析
 
 可视化事件吞吐量、延迟分布和随时间的性能趋势。
 
@@ -127,7 +127,7 @@ graph LR
 
 ![Time Series Analysis](./introduction/TimeSeriesAnalysis.png)
 
-### 7. 性能对比（新增）
+### 7. 性能对比
 
 比较两组跟踪数据，识别性能回退或改进。
 
@@ -149,7 +149,7 @@ graph LR
 
 ![Validation Results](./introduction/ValidationResults.png)
 
-### 9. 搜索与筛选（新增）
+### 9. 搜索与筛选
 
 在所有跟踪事件中进行高级搜索和筛选。
 
@@ -170,11 +170,11 @@ graph LR
 - **零基础设施** — 报告使用 `lz-string` 压缩编码在 URL 哈希中
 - **一键复制** — 单击按钮即可复制可分享链接
 - **关键发现** — 自动生成的摘要（如"mysql2:query 平均 120ms，P95 450ms"）
-- **离线 HTML 导出（新增）** — 下载独立的 HTML 文件，包含所有数据和图表，样式如同专业报告，无需服务器即可查看
+- **离线 HTML 导出** — 下载独立的 HTML 文件，包含所有数据和图表，样式如同专业报告，无需服务器即可查看
 
 ![Diagnostic Report](./introduction/DiagnosticReport.png)
 
-### 11. 内存时间线（新增）
+### 11. 内存时间线
 
 上传 `process.memoryUsage()` 时间序列数据，可视化随时间变化的内存增长趋势。
 
@@ -184,7 +184,7 @@ graph LR
 
 ![Memory Timeline](./introduction/MemoryTimeline.png)
 
-### 12. GC 日志分析器（新增）
+### 12. GC 日志分析器
 
 解析 V8 `--trace-gc` 日志文件，分析垃圾回收行为和外部内存压力。
 
@@ -194,7 +194,7 @@ graph LR
 
 ![GC Log Analyzer](./introduction/GCLogAnalyzer.png)
 
-### 13. 实时监控（新增）
+### 13. 实时监控
 
 通过 WebSocket 实时连接到正在运行的 Node.js 进程——无需重启，无需转储文件。
 
@@ -205,7 +205,7 @@ graph LR
 
 ![Live Monitor](./introduction/LiveMonitor.png)
 
-### 14. 告警规则（新增）
+### 14. 告警规则
 
 定义基于追踪/堆指标阈值规则，并实时查看哪些规则正在触发。
 
@@ -226,7 +226,7 @@ graph LR
 
 ![NodeVerdict Tutorial](./introduction/NodeVerdictTutorial.png)
 
-### 16. AI 根因分析（新增）
+### 16. AI 根因分析
 
 一键根因诊断，由大模型驱动（未配置 API 密钥时回退到本地启发式分析）。
 
@@ -238,13 +238,13 @@ graph LR
 
 ![AI Root Cause](./introduction/AIRootCauseAnalysis.png)
 
-### 17. OpenTelemetry 导入与 .ndv 二进制格式（新增）
+### 17. OpenTelemetry 导入与 .ndv 二进制格式
 
 - **OTel 原生** — 直接放入标准 OTLP/JSON 追踪导出（或 jaeger 风格 JSON），所有页面自动识别并转换为其内部事件模型。无需 Jaeger/采集器。
 - **紧凑 `.ndv` 格式** — 将追踪导出为内存映射友好的二进制格式（约为 JSON 体积的 45%）。追踪查看器可导入/导出 `.ndv`；该布局设计为让 Rust/WASM 解码器可直接读取同一缓冲区。
 - **统一加载器** — 一个加载器即可在全部功能中规范化三种来源（NodeVerdict JSON、OTel JSON、`.ndv`）。
 
-### 18. 性能门禁 CLI（新增）
+### 18. 性能门禁 CLI
 
 把追踪数据变成 CI 门禁。
 
@@ -253,7 +253,7 @@ graph LR
 - **GitHub Actions** — `.github/workflows/perf-gate.yml` 在每次 PR 上运行门禁，并将差异报告发布为 PR 评论
 - **输出** — 人类可读的 Markdown 或供机器解析的 `--json`
 
-### 19. NodeVerdictExporter SDK（新增）
+### 19. NodeVerdictExporter SDK
 
 将运行中 Node.js 服务的 OTel 跨度直接流式送入查看器。
 
@@ -262,7 +262,7 @@ graph LR
 - **格式** — 原生事件 JSON 或 OTLP/JSON 输出，浏览器可直接导入
 - 完整指南见 [`exporter/README.md`](./exporter/README.md)。
 
-### 20. 服务拓扑与分布式根因分析（新增）
+### 20. 服务拓扑与分布式根因分析
 
 在浏览器中把跨服务 OTel 追踪变为实时依赖地图与排序后的根因结论。
 
@@ -276,7 +276,7 @@ graph LR
 
 ![Service Topology](./introduction/ServiceTopology.png)
 
-### 21. 微分调试（新增）
+### 21. 微分调试
 
 对比同一代码路径的**正常**与**故障**执行轨迹，精确定位两次运行在哪一点、因何而分叉 —— 相当于执行轨迹的 git diff。
 
@@ -292,7 +292,7 @@ graph LR
 
 ![JIT Insights](./introduction/JITInsights.png)
 
-### 23. 快照历史（新增）
+### 23. 快照历史
 
 追踪堆快照对比结果随时间的变化趋势，识别内存增长模式。在 Heap Diff 视图中保存的每次对比都会被记录为一条历史记录，让你可以观察多次快照之间保留大小、节点数与增长率的演变。
 
@@ -304,7 +304,7 @@ graph LR
 
 ![Snapshot History](./introduction/SnapshotDiffHistory.png)
 
-### 24. 流式因果图重建（新增）
+### 24. 流式因果图重建
 
 把一条可能是扁平、断裂的 TracingChannel 事件流，重建为**因果 DAG** —— 关注"为什么发生"，而不仅是"何时发生"。
 
@@ -314,7 +314,7 @@ graph LR
 - **环检测** — 合法的因果 DAG 无环；DFS 找回边，标记相关节点并报告环
 - **孤儿语义** — 仅当*声明的*关系被破坏（缺少父节点 / 有始无终）时才视为孤儿；真正的根节点不是孤儿
 
-### 25. 实时流式 RCA（新增）
+### 25. 实时流式 RCA
 
 在*部分*数据上进行的根因推断 —— 数据仍在流入时结论就已到达，且不确定性被显式呈现。
 
@@ -324,7 +324,7 @@ graph LR
 - **不确定性标注** — 未闭合 span 携带降权置信度；整体置信度随已闭合证据累积而升高
 - **早期预警** — 在图形成前，先发出粗粒度 通道级 `critical`/`warning` 告警
 
-### 26. Trace 到代码反向映射（新增）
+### 26. Trace 到代码反向映射
 
 把每个堆栈帧映射回*原始*源码 —— 不再需要手动翻 `node_modules/...:234:5`。
 
@@ -333,7 +333,7 @@ graph LR
 - **Node.js C++ / 内置过滤** — `node::...`、`* internalBinding *`、`node:internal/...`、`[eval]` 帧被*突出*而非隐藏，`node_modules` 视作应用代码
 - **文件系统访问桥** — 选一次项目根目录，按需读取 `.map` 文件；在不支持的环境下退化为 no-op 桩
 
-### 27. 弹性对齐与噪声抑制（新增）
+### 27. 弹性对齐与噪声抑制
 
 同样的代码跑两次仍会因 GC 暂停、DNS/TCP 建立、定时器抖动而不同。本层在产出任何结论*之前*把"抖动"与"回归"分开。
 
@@ -342,7 +342,7 @@ graph LR
 - **回归评分** — `severity = confidence × impact`：置信度是结构性变更的占比，影响融合平均显著性与通道广度；`minDeltaMs` 提供第二道抗噪下限
 - **向后兼容** — 传 `{ regression: {} }` 给 `analyzeDifferential` 时启用完整管线；不传则行为不变
 
-### 28. 视口剔除虚拟滚动瀑布图（新增）
+### 28. 视口剔除虚拟滚动瀑布图
 
 瀑布图不再是一张会在 10 万 span 时卡死的 `N × 节点数` SVG。
 
@@ -354,23 +354,29 @@ graph LR
 
 ## 更多能力
 
-### 29. CPU 性能剖析对比（新增）
+### 29. CPU 性能剖析对比
 
 对比两个 CPU profile，查看不同构建或版本之间哪些热点变大、变小或消失。 
 
 - **双向火焰图对比** — 直接对比两个 profile 的热点差异
 - **函数级别增删改摘要** — 快速定位回退或优化的函数
 - **更适合回归排查** — 适合在发布前验证性能变化
+- **示例配对** — 用 `examples/cpu-profile-sample.cpuprofile`（基线）与 `examples/cpu-profile-diff-after.cpuprofile`（回退版）作为两侧
 
-### 30. 源码归因（新增）
+![CPU 性能剖析对比](./introduction/CPUProfileDiff.png)
+
+### 30. 源码归因
 
 将热点操作或失败操作映射回其对应的源文件和函数。 
 
 - **追踪到源码的关联** — 把堆栈和诊断事件关联到作者代码
 - **Source Map 支持** — 支持 V3 source map 与项目根目录解析
 - **更快定位问题** — 帮助把问题缩小到应用代码，而不是依赖内部实现
+- **示例文件** — 上传 `examples/source-attribution.json`，可看到错误堆栈被归因到应用源码位置（`src/...`），最慢的错误排在最前
 
-### 31. OTel 持续摄入（新增）
+![源码归因](./introduction/SourceAttribution.png)
+
+### 31. OTel 持续摄入
 
 持续接收 OpenTelemetry 批次数据，并直接在浏览器中重建拓扑与健康状态。 
 
@@ -378,29 +384,25 @@ graph LR
 - **实时拓扑更新** — 随数据到达动态重算服务依赖和健康状态
 - **适合持续观测与故障排查** — 适用于长期监控和事故现场分析
 
-### 32. 报告对比（新增）
-
-将两个生成的诊断报告并排比较，快速理解两次运行之间发生了什么变化。 
-
-- **按通道对比差异** — 检查延迟、错误和活动模式的变化
-- **堆内存与错误率对比** — 直观识别回退点
-- **适合 PR / 发布 / 事故复盘** — 帮助快速做结论判断
-
-### 33. CI 基线（新增）
+### 32. CI 基线
 
 把 NodeVerdict 用作 CI 中可复用的性能基线和门禁层。 
 
-- **可复用的性能门禁** — 在不同分支和构建上复用统一阈值
+- **可用的性能门禁** — 在不同分支和构建上复用统一阈值
 - **基线报告生成** — 将当前运行与已知良好基线对比
 - **更适合 PR 级别回归检查** — 在代码上线前暴露性能问题
 
-### 34. 复现脚本生成器（新增）
+![CI 基线](./introduction/CIPerformaceBaseline.png)
+
+### 33. 复现脚本生成器
 
 把一段追踪数据中最热点的部分导出成一个自包含的 Node.js 复现脚本。 
 
 - **最小复现脚本导出** — 把大型追踪缩减为聚焦的小型复现案例
 - **更便于分享和排查** — 易于离线复现和问题转发
 - **更快形成结论** — 帮助把嘈杂追踪变成清晰的复现路径
+
+![复现脚本生成器](./introduction/MinimalReproGenerator.png)
 
 ---
 
@@ -676,6 +678,8 @@ graph TB
 | `examples/tracing-perf-before.json` | 基线跟踪数据：5 个请求，未优化的查询（慢 JOIN、SELECT *、无缓存） | 性能对比、跟踪查看器 |
 | `examples/tracing-perf-after.json` | 优化版本：查询改进、列选择、7 天筛选，延迟降低约 40-50% | 性能对比、跟踪查看器 |
 | `examples/cpu-profile-sample.cpuprofile` | 400 样本 CPU 性能分析，模拟带数据库查询、认证和缓存的 Express 应用 | CPU 性能分析器 |
+| `examples/cpu-profile-diff-after.cpuprofile` | 回退版 CPU profile（同一应用，约 515 样本）：`mysql.query` 更热、新增 `queryBuilder`、删除了 `serialize` | CPU 差分（与 `cpu-profile-sample.cpuprofile` 配对） |
+| `examples/source-attribution.json` | 错误追踪带有指向 `src/...` 应用代码的 V8 堆栈（Repository、Order 事务、连接池、会话、csv 报告）——外层堆栈被归因到热点位置 | 源码归因 |
 | `examples/heap-sample.heapsnapshot` | 最小 5 节点堆快照链（AppCache → DataStore → SessionManager → LargeBuffer） | 堆分析器 |
 | `examples/heap-express-app.heapsnapshot` | 真实的 Express 应用堆：闭包、事件监听器、大缓冲区、缓存条目 | 堆分析器、堆对比 |
 | `examples/heap-diff-before.heapsnapshot` | 前快照：11 个节点，小缓存（2 条目）和会话存储 | 堆对比 |
@@ -703,6 +707,7 @@ graph TB
 
 1. **事件查看器基础** → 上传 `examples/tracing-events.json` 查看时间线
 2. **CPU 性能分析** → 上传 `examples/cpu-profile-sample.cpuprofile` 探索火焰图
+   - **CPU 差分** → 在第二侧上传 `examples/cpu-profile-diff-after.cpuprofile`，查看哪些热点发生回退
 3. **内存分析** → 上传 `examples/heap-sample.heapsnapshot` 查看泄漏检测
 4. **堆对比** → 在堆对比中上传 `examples/heap-diff-before.heapsnapshot` 和 `heap-diff-after.heapsnapshot` 比较内存增长
 5. **性能对比** → 在性能对比中上传 `examples/tracing-perf-before.json` 和 `tracing-perf-after.json` 查看优化效果
@@ -719,6 +724,7 @@ graph TB
 16. **性能门禁** → 在终端运行 `node cli/check.mjs check examples/tracing-perf-before.json --threshold=p99MaxMs=250`，观察门禁失败
 17. **二进制导出** → 在跟踪查看器中上传追踪数据，点击 **导出 .ndv（二进制）**，再重新导入该 `.ndv` 文件
 18. **OTel 导入** → 把 OTLP/JSON 追踪导出拖入任意页面——会自动识别并转换
+19. **源码归因** → 上传 `examples/source-attribution.json`，查看错误堆栈被映射到应用源码位置，并按归因耗时排序
 
 ---
 

@@ -382,7 +382,7 @@ Analyze V8 JIT compiler traces to find deoptimization and hidden-class problems.
 
 ## 5. Sample Files Quick Start
 
-19 sample files are available in the `examples/` directory:
+20 sample files are available in the `examples/` directory:
 
 | File | Best For | Description |
 |------|----------|-------------|
@@ -396,6 +396,8 @@ Analyze V8 JIT compiler traces to find deoptimization and hidden-class problems.
 | `tracing-perf-after.json` | Perf Compare | Optimized performance data |
 | `tracing-time-series.json` | Time Series | 14 operations across 1200ms window |
 | `cpu-profile-sample.cpuprofile` | CPU Profiler | 400-sample CPU profile |
+| `cpu-profile-diff-after.cpuprofile` | CPU Diff | Regressed profile (hotter `mysql.query`, added `queryBuilder`, removed `serialize`) — pair with the sample above |
+| `source-attribution.json` | Source Attribution | Error stacks pointing into `src/...` app code; outer frame attributed as hot site |
 | `heap-sample.heapsnapshot` | Heap Analyzer | Minimal heap snapshot (5 nodes) |
 | `heap-express-app.heapsnapshot` | Heap Analyzer | Realistic Express app heap |
 | `heap-diff-before.heapsnapshot` | Heap Diff | Heap comparison baseline |

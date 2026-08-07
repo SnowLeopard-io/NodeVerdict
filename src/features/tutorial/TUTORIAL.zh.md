@@ -375,6 +375,8 @@ snapshot.pipe(writer);
 | `tracing-perf-after.json` | 性能对比 | 优化后的性能数据 |
 | `tracing-time-series.json` | 时序分析 | 1200ms 窗口内的 14 个操作 |
 | `cpu-profile-sample.cpuprofile` | CPU 分析器 | 400 样本 CPU profile |
+| `cpu-profile-diff-after.cpuprofile` | CPU 差分 | 回退版 profile（`mysql.query` 更热、新增 `queryBuilder`、删除了 `serialize`）— 与上面的基线配对使用 |
+| `source-attribution.json` | 源码归因 | 带有指向 `src/...` 应用代码的错误堆栈；最外层帧被归因到热点位置 |
 | `heap-sample.heapsnapshot` | 堆分析器 | 最小堆快照（5 个节点） |
 | `heap-express-app.heapsnapshot` | 堆分析器 | 真实的 Express 应用堆 |
 | `heap-diff-before.heapsnapshot` | 堆差异对比 | 堆比较基线 |

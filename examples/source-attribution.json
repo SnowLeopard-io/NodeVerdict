@@ -1,0 +1,442 @@
+[
+  {
+    "channel": "express:request",
+    "eventType": "start",
+    "timestamp": 1710001000000,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/users/:id",
+      "http.requestId": "src-attr-req-001"
+    },
+    "operationId": "attr:req:1"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "asyncStart",
+    "timestamp": 1710001000001,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/users/:id"
+    },
+    "operationId": "attr:req:1"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "start",
+    "timestamp": 1710001000005,
+    "context": {
+      "query": "SELECT * FROM users WHERE id = ?",
+      "values": [42],
+      "server.address": "db-prod-1.example.com",
+      "server.port": 3306
+    },
+    "operationId": "attr:query:1"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "asyncStart",
+    "timestamp": 1710001000006,
+    "context": {
+      "query": "SELECT * FROM users WHERE id = ?",
+      "values": [42]
+    },
+    "operationId": "attr:query:1"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "error",
+    "timestamp": 1710001000120,
+    "context": {
+      "query": "SELECT * FROM users WHERE id = ?",
+      "values": [42]
+    },
+    "error": {
+      "name": "Error",
+      "message": "connect ETIMEDOUT db-prod-1.example.com:3306",
+      "stack": "Error: connect ETIMEDOUT db-prod-1.example.com:3306\n    at runQuery (file:///app/src/repositories/UserRepository.ts:88:27)\n    at findById (/app/src/repositories/UserRepository.ts:64:14)\n    at handler (/app/src/routes/users.ts:52:33)\n    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)\n    at next (/app/node_modules/express/lib/router/route.js:137:13)\n    at Route.dispatch (/app/node_modules/express/lib/router/route.js:112:3)"
+    },
+    "duration": 115,
+    "operationId": "attr:query:1"
+  },
+  {
+    "channel": "mysql2:pool:connect",
+    "eventType": "start",
+    "timestamp": 1710001000100,
+    "context": {
+      "server.address": "db-prod-1.example.com",
+      "server.port": 3306,
+      "user": "app_user",
+      "database": "ecommerce"
+    },
+    "operationId": "attr:pool:1"
+  },
+  {
+    "channel": "mysql2:pool:connect",
+    "eventType": "error",
+    "timestamp": 1710001006000,
+    "context": {
+      "server.address": "db-prod-1.example.com",
+      "server.port": 3306
+    },
+    "error": {
+      "name": "Error",
+      "message": "connect ETIMEDOUT db-prod-1.example.com:3306",
+      "stack": "Error: connect ETIMEDOUT db-prod-1.example.com:3306\n    at Pool.getConnection (/app/src/db/pool.ts:40:22)\n    at withConnection (/app/src/db/transaction.ts:17:10)\n    at findByEmail (/app/src/services/auth.ts:95:14)\n    at handler (/app/src/routes/auth.ts:33:21)\n    at AsyncResource.runInAsyncScope (node:async_hooks:204:14)\n    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)"
+    },
+    "duration": 5000,
+    "operationId": "attr:pool:1"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "end",
+    "timestamp": 1710001006020,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/users/:id",
+      "http.statusCode": 500
+    },
+    "duration": 5015,
+    "operationId": "attr:req:1"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "asyncEnd",
+    "timestamp": 1710001006021,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/users/:id"
+    },
+    "operationId": "attr:req:1"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "start",
+    "timestamp": 1710001006100,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/users/:id",
+      "http.requestId": "src-000-req-002"
+    },
+    "operationId": "attr:req:2"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "asyncStart",
+    "timestamp": 1710001006101,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/users/:id"
+    },
+    "operationId": "attr:req:2"
+  },
+  {
+    "channel": "redis:command",
+    "eventType": "start",
+    "timestamp": 1710001006105,
+    "context": {
+      "command": "GET",
+      "args": ["users:42"],
+      "server.address": "redis-cache-1.example.com",
+      "server.port": 6379
+    },
+    "operationId": "attr:redis:1"
+  },
+  {
+    "channel": "redis:command",
+    "eventType": "asyncStart",
+    "timestamp": 1710001006106,
+    "context": {
+      "command": "GET",
+      "args": ["users:42"]
+    },
+    "operationId": "attr:redis:1"
+  },
+  {
+    "channel": "redis:command",
+    "eventType": "error",
+    "timestamp": 1710001006200,
+    "context": {
+      "command": "GET",
+      "args": ["users:42"]
+    },
+    "error": {
+      "name": "RedisError",
+      "message": "Redis connection lost: read ECONNRESET",
+      "stack": "RedisError: Redis connection lost: read ECONNRESET\n    at callValue (/app/src/services/cache.ts:76:18)\n    at tryGetCached (/app/src/services/cache.ts:33:11)\n    at handler (/app/src/routes/users.ts:58:26)\n    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)"
+    },
+    "duration": 95,
+    "operationId": "attr:redis:1"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "end",
+    "timestamp": 1710001006210,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/users/:id",
+      "http.statusCode": 500
+    },
+    "duration": 110,
+    "operationId": "attr:req:2"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "asyncEnd",
+    "timestamp": 1710001006211,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/users/:id"
+    },
+    "operationId": "attr:req:2"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "start",
+    "timestamp": 1710001007000,
+    "context": {
+      "http.method": "POST",
+      "http.url": "/api/orders",
+      "http.requestId": "src-000-req-003"
+    },
+    "operationId": "attr:req:3"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "asyncStart",
+    "timestamp": 1710001007001,
+    "context": {
+      "http.method": "POST",
+      "http.url": "/api/orders"
+    },
+    "operationId": "attr:req:3"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "start",
+    "timestamp": 1710001007005,
+    "context": {
+      "query": "INSERT INTO orders (user_id, product, amount) VALUES (?, ?, ?)",
+      "values": [42, "widget", 9.99],
+      "server.address": "db-prod-1.example.com",
+      "server.port": 3306
+    },
+    "operationId": "attr:query:2"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "asyncStart",
+    "timestamp": 1710001007006,
+    "context": {
+      "query": "INSERT INTO orders (user_id, product, amount) VALUES (?, ?, ?)",
+      "values": [42, "widget", 9.99]
+    },
+    "operationId": "attr:query:2"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "error",
+    "timestamp": 1710001007200,
+    "context": {
+      "query": "INSERT INTO orders (user_id, product, amount) VALUES (?, ?, ?)",
+      "values": [42, "widget", 9.99]
+    },
+    "error": {
+      "name": "Error",
+      "message": "Cannot add or update a child row: a foreign key constraint fails",
+      "stack": "Error: Cannot add or update a child row: a foreign key constraint fails\n    at runQuery (file:///app/src/repositories/OrderRepository.ts:31:17)\n    at createOrder (/app/src/services/order.ts:58:24)\n    at handler (/app/src/routes/orders.ts:41:33)\n    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)"
+    },
+    "duration": 195,
+    "operationId": "attr:query:2"
+  },
+  {
+    "channel": "expr:request",
+    "eventType": "end",
+    "timestamp": 1710001007220,
+    "context": {
+      "http.method": "POST",
+      "http.url": "/api/orders",
+      "http.statusCode": 400
+    },
+    "duration": 215,
+    "operationId": "attr:req:3"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "asyncEnd",
+    "timestamp": 1710001007221,
+    "context": {
+      "http.method": "POST",
+      "http.url": "/api/orders"
+    },
+    "operationId": "attr:req:3"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "start",
+    "timestamp": 1710001008000,
+    "context": {
+      "query": "SELECT p.* FROM products p WHERE p.stock > 0 ORDER BY p.updated_at LIMIT 5000",
+      "values": [],
+      "server.address": "db-prod-1.example.com",
+      "server.port": 3306
+    },
+    "operationId": "attr:query:3"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "asyncStart",
+    "timestamp": 1710001008001,
+    "context": {
+      "query": "SELECT p.* FROM products p WHERE p.stock > 0 ORDER BY p.updated_at LIMIT 5000",
+      "values": []
+    },
+    "operationId": "attr:query:3"
+  },
+  {
+    "channel": "sql:stream",
+    "eventType": "start",
+    "timestamp": 1710001008005,
+    "context": {
+      "query": "SELECT p.* FROM products p WHERE p.stock > 0",
+      "rows": 5000
+    },
+    "operationId": "attr:stream:1"
+  },
+  {
+    "channel": "sql:stream",
+    "eventType": "end",
+    "timestamp": 1710001016000,
+    "context": {
+      "rows": 5000
+    },
+    "duration": 7990,
+    "operationId": "attr:stream:1"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "end",
+    "timestamp": 1710001016010,
+    "context": {
+      "query": "SELECT p.* FROM products p WHERE p.stock > 0 ORDER BY p.updated_at LIMIT 5000",
+      "values": [],
+      "rows": 5000
+    },
+    "duration": 8005,
+    "operationId": "attr:query:3"
+  },
+  {
+    "channel": "mysql2:query",
+    "eventType": "asyncEnd",
+    "timestamp": 1710001016011,
+    "context": {
+      "query": "SELECT p.* FROM products p WHERE p.stock > 0 ORDER BY p.updated_at LIMIT 5000",
+      "values": []
+    },
+    "operationId": "attr:query:3"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "start",
+    "timestamp": 1710001017000,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/products/export",
+      "http.requestId": "src-000-req-004"
+    },
+    "operationId": "attr:req:4"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "asyncStart",
+    "timestamp": 1710001017001,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/products/export"
+    },
+    "operationId": "attr:req:4"
+  },
+  {
+    "channel": "fs:readStream",
+    "eventType": "start",
+    "timestamp": 1710001017005,
+    "context": {
+      "file": "/var/tmp/report.csv"
+    },
+    "operationId": "attr:fs:1"
+  },
+  {
+    "channel": "fs:readStream",
+    "eventType": "error",
+    "timestamp": 1710001017110,
+    "context": {
+      "file": "/var/tmp/report.csv"
+    },
+    "error": {
+      "name": "Error",
+      "message": "ENOENT: no such file or directory, open '/var/tmp/report.csv' at async generateReport (/app/src/reporters/csv.ts:12:9)",
+      "stack": "Error: ENOENT: no such file or directory, open '/var/tmp/report.csv'\n    at generateReport (file:///app/src/reporters/csv.ts:12:9)\n    at streamProductsToReport (/app/src/services/export.ts:46:18)\n    at handler (/app/src/routes/products.ts:88:27)\n    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)"
+    },
+    "duration": 105,
+    "operationId": "attr:fs:1"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "end",
+    "timestamp": 1710001017150,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/products/export",
+      "http.statusCode": 500
+    },
+    "duration": 115,
+    "operationId": "attr:req:4"
+  },
+  {
+    "channel": "express:request",
+    "eventType": "asyncEnd",
+    "timestamp": 1710001017151,
+    "context": {
+      "http.method": "GET",
+      "http.url": "/api/products/export"
+    },
+    "operationId": "attr:req:4"
+  },
+  {
+    "channel": "ioredis:command",
+    "eventType": "start",
+    "timestamp": 1710001018000,
+    "context": {
+      "command": "HGETALL",
+      "args": ["session:38ffe2"],
+      "server.address": "redis-cache-1.example.com",
+      "server.port": 6379
+    },
+    "operationId": "attr:redis:2"
+  },
+  {
+    "channel": "ioredis:command",
+    "eventType": "asyncStart",
+    "timestamp": 1710001018001,
+    "context": {
+      "command": "HGETALL",
+      "args": ["session:38ffe2"]
+    },
+    "operationId": "attr:redis:2"
+  },
+  {
+    "channel": "ioredis:command",
+    "eventType": "error",
+    "timestamp": 1710001018090,
+    "context": {
+      "command": "HGETALL",
+      "args": ["session:38ffe2"]
+    },
+    "error": {
+      "name": "RedisError",
+      "message": "WRONGTYPE Operation against a key holding the wrong kind of value",
+      "stack": "RedisError: WRONGTYPE Operation against a key holding the wrong kind of value\n    at getSession (file:///app/src/services/session.ts:27:13)\n    at loadSession (/app/src/middleware/auth-guard.ts:19:9)\n    at layer (/app/src/routes/api.ts:15:20)\n    at Layer.handle [as handle_request] (/app/node_modules/express/lib/router/layer.js:95:5)"
+    },
+    "duration": 90,
+    "operationId": "attr:redis:2"
+  }
+]
